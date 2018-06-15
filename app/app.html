@@ -1,0 +1,69 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Checkbook</title>
+</head>
+<body>
+
+  <div id="app" class="container" style="display: none;">
+    <!-- TODO:
+    make it pretty
+    make category selection a type ahead
+    allow editing of any row
+    -->
+
+    <h1>Checkbook Register</h1>
+
+    <div id="register">
+      <div class="record header">
+        <div id="date">Date</div>
+        <div id="payee_category_memo">
+          <div id="payee" >Payee</div>
+          <div id="category_memo">
+            <div id="category">Category</div>
+            <div id="memo">Memo</div>
+          </div>
+        </div>
+        <div id="amount">Amount</div>
+      </div>
+    <div id="transactions"></div>
+    </div>
+    <div id="new_transaction" class="record input">
+        <div id="date"><input type="text" id="txt_date" /></div>
+        <div id="payee_category_memo">
+          <div id="payee"><input type="text" id="txt_payee" placeholder="payee" /></div>
+          <div id="category_memo">
+            <div id="category">
+                <select id="ddlCategory">
+                    <option value="" disabled selected>Select a category...</option>
+                </select>
+            </div>
+            <div id="memo"><input type="text" id="txt_memo" placeholder="memo" /></div>
+          </div>
+        </div>
+        <div id="amount"><input type="text" id="txt_amount" placeholder="0.00" />
+        <button id="btn_post">Submit</button>
+       </div>
+      </div>
+  </div>
+
+  <button id="btn_mapTransactions">Import OFX transactions</button>
+
+  <div id="map_import">
+
+    <h2>Map Payees</h2>
+
+    <div id="transactionMapping"></div>
+
+    <div id="mappingButtons">
+      <button id="btn_cancel_OFX">Cancel</button>
+      <button id="btn_save_OFX_transactions">Save OFX Transactions</button>
+    </div>
+
+  </div>
+
+  <script src="app.js"></script>
+
+</body>
+</html>
