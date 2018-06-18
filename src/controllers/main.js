@@ -165,6 +165,22 @@ const newPayee = function(){
   alert("new payee")
 }
 
+const importQIF = function(){
+  const fs = require('fs');
+  const path = require('path')
+  const filepath = path.resolve(__dirname, '../src/data/sample.qif')
+
+  fs.readFile(filepath, 'utf-8', (err, data) => {
+      if(err){
+          alert("An error ocurred reading the file :" + err.message);
+          return;
+      }
+
+      const transactions = data.split("^")
+      console.dir(transactions)
+  })
+}
+
 /**** PRIVATE FUNCTIONS ****/
 function resetInput(){
       document.querySelector("#txt_date").value = utilities.toMMDDYYYY(new Date())
@@ -180,6 +196,9 @@ function wireUpEvents(){
 
       const importButton = document.getElementById("btn_mapTransactions")
       importButton.addEventListener("click", mapOFXTransactions)
+
+      const importQIFButton = document.getElementById("btn_importQIF")
+      importQIFButton.addEventListener("click", importQIF)
 
       var newPayeeLinks = document.getElementsByClassName("lnk_newPayee");
       for (let i = 0, len = newPayeeLinks.length; i < len;){

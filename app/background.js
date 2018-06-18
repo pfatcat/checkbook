@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 11);
+/******/ 	return __webpack_require__(__webpack_require__.s = 12);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -95,7 +95,8 @@ module.exports = {"name":"development","description":"Add here any environment s
 /* 8 */,
 /* 9 */,
 /* 10 */,
-/* 11 */
+/* 11 */,
+/* 12 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -103,15 +104,15 @@ module.exports = {"name":"development","description":"Add here any environment s
 
 var _path = _interopRequireDefault(__webpack_require__(2));
 
-var _url = _interopRequireDefault(__webpack_require__(12));
+var _url = _interopRequireDefault(__webpack_require__(13));
 
 var _electron = __webpack_require__(0);
 
-var _dev_menu_template = __webpack_require__(13);
+var _dev_menu_template = __webpack_require__(14);
 
-var _edit_menu_template = __webpack_require__(14);
+var _edit_menu_template = __webpack_require__(15);
 
-var _window = _interopRequireDefault(__webpack_require__(15));
+var _window = _interopRequireDefault(__webpack_require__(16));
 
 var _env = _interopRequireDefault(__webpack_require__(6));
 
@@ -164,13 +165,13 @@ _electron.app.on("window-all-closed", () => {
 });
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports) {
 
 module.exports = require("url");
 
 /***/ }),
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -208,7 +209,7 @@ const devMenuTemplate = {
 exports.devMenuTemplate = devMenuTemplate;
 
 /***/ }),
-/* 14 */
+/* 15 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -251,7 +252,7 @@ const editMenuTemplate = {
 exports.editMenuTemplate = editMenuTemplate;
 
 /***/ }),
-/* 15 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";

@@ -1,0 +1,142 @@
+!Type:Bank 
+D5/ 7'18
+U-898.14
+T-898.14
+NEFT
+PFranklin America
+LMortgage
+^
+D5/ 7'18
+U-101.28
+T-101.28
+NEFT
+PFranklin America
+MEscrow Adjustment
+LMortgage
+^
+D5/ 8'18
+U175.05
+T175.05
+NTXFR
+PChase
+L[Chase Slate 7617]
+^
+D5/11'18
+U-253.87
+T-253.87
+NEFT
+PNES
+LUtilities
+^
+D5/14'18
+U-33.42
+T-33.42
+NEFT
+PMetro Water
+LUtilities
+^
+D5/15'18
+U3,400.63
+T3,400.63
+NDEP
+PForty AU
+LSalary
+^
+D5/17'18
+U-700.00
+T-700.00
+NATM
+PCash
+MJohn Deere
+LCash
+^
+D5/18'18
+U164.46
+T164.46
+NEFT
+PRobin Scianna
+LTravel Expense:Captiva 2018
+^
+D5/19'18
+U-115.63
+T-115.63
+PLiberty Mutual
+LAuto Insurance
+^
+D5/21'18
+U-2,64
+
+3.89
+T-2,643.89
+NTXFR
+PChase
+L[Chase Sapphire 7890]
+^
+D5/22'18
+U-50.00
+T-50.00
+NEFT
+PComcast
+LCable Tv
+^
+D5/25'18
+U-69.00
+T-69.00
+PLiberty Mutual
+LOakley Road:Home Insurance
+^
+D6/ 1'18
+U3,400.62
+T3,400.62
+NDEP
+PForty AU
+LSalary
+^
+D6/ 1'18
+U-892.82
+T-892.82
+PFranklin America
+MM4QFX-0JWDK
+LMortgage
+^
+D6/ 2'18
+U-350.00
+T-350.00
+PNissan Motor Acceptance Corp
+LAuto Loan
+^
+D6/ 3'18
+U-51.82
+T-51.82
+NATM
+PHome Depot
+MCash for Jack Faircloth
+LTravel Expense:Captiva 2018
+^
+D6/ 4'18
+U-45.00
+T-45.00
+NEFT
+PSteve Ballard
+LTravel Expense
+^
+D6/ 7'18
+U6,660.64
+T6,660.64
+NEFT
+PCoinbase
+LInvest Exp
+^
+D6/ 7'18
+U-24.14
+T-24.14
+N6518
+PHeritage Medical Associates
+LMedical
+^
+D6/19'18
+U-2,050.69
+T-2,050.69
+PChase
+L[Chase Sapphire 7890]
+^

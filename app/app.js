@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 16);
+/******/ 	return __webpack_require__(__webpack_require__.s = 17);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -241,7 +241,7 @@ module.exports = {
 "use strict";
 
 
-const Database = __webpack_require__(26);
+const Database = __webpack_require__(27);
 
 const path = __webpack_require__(2);
 
@@ -431,7 +431,7 @@ var singleton = null;
 var	singletonCounter = 0;
 var	stylesInsertedAtTop = [];
 
-var	fixUrls = __webpack_require__(19);
+var	fixUrls = __webpack_require__(20);
 
 module.exports = function(list, options) {
 	if (typeof DEBUG !== "undefined" && DEBUG) {
@@ -888,24 +888,30 @@ module.exports = {
 };
 
 /***/ }),
-/* 11 */,
+/* 11 */
+/***/ (function(module, exports) {
+
+module.exports = require("fs");
+
+/***/ }),
 /* 12 */,
 /* 13 */,
 /* 14 */,
 /* 15 */,
-/* 16 */
+/* 16 */,
+/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-__webpack_require__(17);
+__webpack_require__(18);
 
-__webpack_require__(20);
-
-__webpack_require__(22);
+__webpack_require__(21);
 
 __webpack_require__(23);
+
+__webpack_require__(24);
 
 var _electron = __webpack_require__(0);
 
@@ -913,7 +919,7 @@ var _fsJetpack = _interopRequireDefault(__webpack_require__(5));
 
 var _env = _interopRequireDefault(__webpack_require__(6));
 
-var _main2 = _interopRequireDefault(__webpack_require__(24));
+var _main2 = _interopRequireDefault(__webpack_require__(25));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -944,13 +950,13 @@ document.querySelector("#app").style.display = "block"; //document.querySelector
 // process.versions.electron;
 
 /***/ }),
-/* 17 */
+/* 18 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(18);
+var content = __webpack_require__(19);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -975,7 +981,7 @@ if(false) {
 }
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(7)(false);
@@ -983,13 +989,13 @@ exports = module.exports = __webpack_require__(7)(false);
 
 
 // module
-exports.push([module.i, "html,\nbody {\n  width: 100%;\n  height: 100%;\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  /* display: flex; */\n  justify-content: center;\n  align-items: center;\n  font-family: sans-serif;\n  color: #525252;\n}\n\na {\n  text-decoration: none;\n  color: #cb3837;\n}\n\ninput:focus::-webkit-input-placeholder { color:transparent; }\ninput:focus:-moz-placeholder { color:transparent; } /* FF 4-18 */\ninput:focus::-moz-placeholder { color:transparent; } /* FF 19+ */\ninput:focus:-ms-input-placeholder { color:transparent; } /* IE 10+ */\n\n.container {\n  text-align: center;\n  padding: 10px;\n}\n\n.register{\n  width: 80%;\n  display: flex;\n}\n\n.record {\n  width: 100%;\n  border: 1px solid #000000;\n  text-align: left;\n}\n\n.record #date{\n  width: 15%; display: inline-block;\n}\n\n.record #payee_category_memo{\n  width: 70%;\n  display: inline-block;\n  border-left: 1px solid #000000;\n  border-right: 1px solid #000000;\n}\n\n.record #category_memo{\n  border-top: 1px solid #000000;\n}\n\n.record #category_memo #category{\n  display: inline-block;\n  border-right: 1px solid #000000;\n  width: 50%\n}\n\n.record #category_memo #memo{\n  display: inline-block;\n  width: 48%;\n}\n\n.record #amount{\n  display: inline-block;\n  width: 10%;\n}\n\n.record.header {\n  font-weight: bold;\n}\n\n.record.input input {\n  /*color: rgb(185, 178, 178);\n  font-style: italic;*/\n  outline: none;\n  box-shadow: none;\n  width: 99%;\n}\n\n.record.input #amount{\n  width: 12%;\n}\n\n.record.input #txt_amount{\n  width: 30%;\n}\n\n#map_import{\n  display: none;\n  position:fixed;\n  top: 50%;\n  left: 50%;\n  width:50em;\n  height:30em;\n  margin-top: -15em; /*set to a negative number 1/2 of your height*/\n  margin-left: -25em; /*set to a negative number 1/2 of your width*/\n  border: 1px solid #ccc;\n  background-color: #f3f3f3;\n}\n\n#mappingButtons{\n  position:absolute;\n  bottom:0;\n  right:0;\n}\n\n\n#transactionMapping{\n  overflow:scroll;\n  height: 25em;\n}\n\n#transactionMapping .mappingHeader div{\n  display: inline-block;\n}\n\n#transactionMapping .mapping div{\n  display: inline-block;\n}\n\n\n#transactionMapping .mapping .sourcePayee{\n  width: 50%;\n}\n\n#transactionMapping .mapping .targetPayee{\n  width: 30%;\n}\n\n#transactionMapping .mapping .newPayee{\n  width: 15%;\n}\n\n#ofx_transactions{\n  display: none;\n}\n\n", ""]);
+exports.push([module.i, "html,\r\nbody {\r\n  width: 100%;\r\n  height: 100%;\r\n  margin: 0;\r\n  padding: 0;\r\n}\r\n\r\nbody {\r\n  /* display: flex; */\r\n  justify-content: center;\r\n  align-items: center;\r\n  font-family: sans-serif;\r\n  color: #525252;\r\n}\r\n\r\na {\r\n  text-decoration: none;\r\n  color: #cb3837;\r\n}\r\n\r\ninput:focus::-webkit-input-placeholder { color:transparent; }\r\ninput:focus:-moz-placeholder { color:transparent; } /* FF 4-18 */\r\ninput:focus::-moz-placeholder { color:transparent; } /* FF 19+ */\r\ninput:focus:-ms-input-placeholder { color:transparent; } /* IE 10+ */\r\n\r\n.container {\r\n  text-align: center;\r\n  padding: 10px;\r\n}\r\n\r\n.register{\r\n  width: 80%;\r\n  display: flex;\r\n}\r\n\r\n.record {\r\n  width: 100%;\r\n  border: 1px solid #000000;\r\n  text-align: left;\r\n}\r\n\r\n.record #date{\r\n  width: 15%; display: inline-block;\r\n}\r\n\r\n.record #payee_category_memo{\r\n  width: 70%;\r\n  display: inline-block;\r\n  border-left: 1px solid #000000;\r\n  border-right: 1px solid #000000;\r\n}\r\n\r\n.record #category_memo{\r\n  border-top: 1px solid #000000;\r\n}\r\n\r\n.record #category_memo #category{\r\n  display: inline-block;\r\n  border-right: 1px solid #000000;\r\n  width: 50%\r\n}\r\n\r\n.record #category_memo #memo{\r\n  display: inline-block;\r\n  width: 48%;\r\n}\r\n\r\n.record #amount{\r\n  display: inline-block;\r\n  width: 10%;\r\n}\r\n\r\n.record.header {\r\n  font-weight: bold;\r\n}\r\n\r\n.record.input input {\r\n  /*color: rgb(185, 178, 178);\r\n  font-style: italic;*/\r\n  outline: none;\r\n  box-shadow: none;\r\n  width: 99%;\r\n}\r\n\r\n.record.input #amount{\r\n  width: 12%;\r\n}\r\n\r\n.record.input #txt_amount{\r\n  width: 30%;\r\n}\r\n\r\n#map_import{\r\n  display: none;\r\n  position:fixed;\r\n  top: 50%;\r\n  left: 50%;\r\n  width:50em;\r\n  height:30em;\r\n  margin-top: -15em; /*set to a negative number 1/2 of your height*/\r\n  margin-left: -25em; /*set to a negative number 1/2 of your width*/\r\n  border: 1px solid #ccc;\r\n  background-color: #f3f3f3;\r\n}\r\n\r\n#mappingButtons{\r\n  position:absolute;\r\n  bottom:0;\r\n  right:0;\r\n}\r\n\r\n\r\n#transactionMapping{\r\n  overflow:scroll;\r\n  height: 25em;\r\n}\r\n\r\n#transactionMapping .mappingHeader div{\r\n  display: inline-block;\r\n}\r\n\r\n#transactionMapping .mapping div{\r\n  display: inline-block;\r\n}\r\n\r\n\r\n#transactionMapping .mapping .sourcePayee{\r\n  width: 50%;\r\n}\r\n\r\n#transactionMapping .mapping .targetPayee{\r\n  width: 30%;\r\n}\r\n\r\n#transactionMapping .mapping .newPayee{\r\n  width: 15%;\r\n}\r\n\r\n#ofx_transactions{\r\n  display: none;\r\n}\r\n\r\n", ""]);
 
 // exports
 
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports) {
 
 
@@ -1084,13 +1090,13 @@ module.exports = function (css) {
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(21);
+var content = __webpack_require__(22);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -1115,7 +1121,7 @@ if(false) {
 }
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(7)(false);
@@ -1129,7 +1135,7 @@ exports.push([module.i, ".qs-datepicker {\n  color: black;\n  position: absolute
 
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1188,7 +1194,7 @@ document.addEventListener("contextmenu", event => {
 }, false);
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1238,27 +1244,27 @@ const supportExternalLinks = event => {
 document.addEventListener("click", supportExternalLinks, false);
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _main = _interopRequireDefault(__webpack_require__(25));
+var _main = _interopRequireDefault(__webpack_require__(26));
 
 var _transaction = _interopRequireDefault(__webpack_require__(9));
 
 var _category = _interopRequireDefault(__webpack_require__(10));
 
-var _datepicker = _interopRequireDefault(__webpack_require__(27));
+var _datepicker = _interopRequireDefault(__webpack_require__(28));
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
 var _payee = _interopRequireDefault(__webpack_require__(3));
 
-var _payee_lookup = _interopRequireDefault(__webpack_require__(28));
+var _payee_lookup = _interopRequireDefault(__webpack_require__(29));
 
-var _ofx_importer = _interopRequireDefault(__webpack_require__(29));
+var _ofx_importer = _interopRequireDefault(__webpack_require__(30));
 
 var _enums = _interopRequireDefault(__webpack_require__(31));
 
@@ -1413,6 +1419,23 @@ const saveOFXTransactions = function () {
 const newPayee = function () {
   alert("new payee");
 };
+
+const importQIF = function () {
+  const fs = __webpack_require__(11);
+
+  const path = __webpack_require__(2);
+
+  const filepath = path.resolve(__dirname, '../src/data/sample.qif');
+  fs.readFile(filepath, 'utf-8', (err, data) => {
+    if (err) {
+      alert("An error ocurred reading the file :" + err.message);
+      return;
+    }
+
+    const transactions = data.split("^");
+    console.dir(transactions);
+  });
+};
 /**** PRIVATE FUNCTIONS ****/
 
 
@@ -1429,6 +1452,8 @@ function wireUpEvents() {
   postButton.addEventListener("click", saveTransaction);
   const importButton = document.getElementById("btn_mapTransactions");
   importButton.addEventListener("click", mapOFXTransactions);
+  const importQIFButton = document.getElementById("btn_importQIF");
+  importQIFButton.addEventListener("click", importQIF);
   var newPayeeLinks = document.getElementsByClassName("lnk_newPayee");
 
   for (let i = 0, len = newPayeeLinks.length; i < len;) {
@@ -1485,7 +1510,7 @@ function buildCategoryList() {
 })();
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1578,20 +1603,20 @@ module.exports = {
 };
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports) {
 
 module.exports = require("better-sqlite3");
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;!function(t,e){var n="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t};"object"===( false?"undefined":n(exports))?module.exports=e(): true?!(__WEBPACK_AMD_DEFINE_RESULT__ = (function(){return e()}).call(exports, __webpack_require__, exports, module),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)):t.datepicker=e()}(this,function(){"use strict";function t(t,a){var s=t.split?document.querySelector(t):t;a=e(a||n(),s,t);var r=s.parentElement,i=document.createElement("div"),c=a,u=c.startDate,d=c.dateSelected,p=s===document.body||s===document.querySelector("html"),v={el:s,parent:r,nonInput:"INPUT"!==s.nodeName,noPosition:p,position:!p&&a.position,startDate:u,dateSelected:d,disabledDates:a.disabledDates,minDate:a.minDate,maxDate:a.maxDate,noWeekends:!!a.noWeekends,calendar:i,currentMonth:(u||d).getMonth(),currentMonthName:(a.months||w)[(u||d).getMonth()],currentYear:(u||d).getFullYear(),setDate:h,reset:f,remove:y,onSelect:a.onSelect,onShow:a.onShow,onHide:a.onHide,onMonthChange:a.onMonthChange,formatter:a.formatter,months:a.months||w,days:a.customDays||g,startDay:a.startDay,overlayPlaceholder:a.overlayPlaceholder||"4-digit year",overlayButton:a.overlayButton||"Submit",disableMobile:a.disableMobile,isMobile:"ontouchstart"in window};return d&&l(s,v),i.classList.add("qs-datepicker"),i.classList.add("qs-hidden"),b.push(s),o(u||d,v),S.forEach(function(t){window.addEventListener(t,D.bind(v))}),"static"===getComputedStyle(r).position&&(r.style.position="relative"),r.appendChild(i),v}function e(t,e){if(b.includes(e))throw"A datepicker already exists on that element.";var n=t.position,o=t.maxDate,s=t.minDate,r=t.dateSelected,i=t.formatter,c=t.customMonths,l=t.customDays,u=t.overlayPlaceholder,d=t.overlayButton,h=t.startDay,f=t.disabledDates,y=+v(r);if(t.disabledDates=(f||[]).map(function(t){if(!p(t))throw'You supplied an invalid date to "options.disabledDates".';if(+v(t)===y)throw'"disabledDates" cannot contain the same date as "dateSelected".';return+v(t)}),n){if(!["tr","tl","br","bl","c"].some(function(t){return n===t}))throw'"options.position" must be one of the following: tl, tr, bl, br, or c.';t.position=a(n)}else t.position=a("bl");if(["startDate","dateSelected","minDate","maxDate"].forEach(function(e){if(t[e]){if(!p(t[e])||isNaN(+t[e]))throw'"options.'+e+'" needs to be a valid JavaScript Date object.';t[e]=v(t[e])}}),t.startDate=v(t.startDate||t.dateSelected||new Date),t.formatter="function"==typeof i?i:null,o<s)throw'"maxDate" in options is less than "minDate".';if(r){if(s>r)throw'"dateSelected" in options is less than "minDate".';if(o<r)throw'"dateSelected" in options is greater than "maxDate".'}if(["onSelect","onShow","onHide","onMonthChange"].forEach(function(e){t[e]="function"==typeof t[e]&&t[e]}),[c,l].forEach(function(e,n){if(e){var a=['"customMonths" must be an array with 12 strings.','"customDays" must be an array with 7 strings.'];if("[object Array]"!=={}.toString.call(e)||e.length!==(n?7:12))throw a[n];t[n?"days":"months"]=e}}),void 0!==h&&+h&&+h>0&&+h<7){var m=(t.customDays||g).slice(),q=m.splice(0,h);t.customDays=m.concat(q),t.startDay=+h}else t.startDay=0;return[u,d].forEach(function(e,n){e&&e.split&&(n?t.overlayButton=e:t.overlayPlaceholder=e)}),t}function n(){return{startDate:v(new Date),position:"bl"}}function a(t){var e={};return e[M[t[0]]]=1,"c"===t?e:(e[M[t[1]]]=1,e)}function o(t,e){var n=s(t,e),a=r(t,e),o=i(e);e.calendar.innerHTML=n+a+o}function s(t,e){return'\n      <div class="qs-controls">\n        <div class="qs-arrow qs-left"></div>\n        <div class="qs-month-year">\n          <span class="qs-month">'+e.months[t.getMonth()]+'</span>\n          <span class="qs-year">'+t.getFullYear()+'</span>\n        </div>\n        <div class="qs-arrow qs-right"></div>\n      </div>\n    '}function r(t,e){var n=e.minDate,a=e.maxDate,o=e.dateSelected,s=e.currentYear,r=e.currentMonth,i=e.noWeekends,c=e.days,l=e.disabledDates,u=new Date,d=u.toJSON().slice(0,7)===t.toJSON().slice(0,7),h=new Date(new Date(t).setDate(1)),f=h.getDay()-e.startDay,p=f<0?7:0;h.setMonth(h.getMonth()+1),h.setDate(0);var y=h.getDate(),m=[],q=p+7*((f+y)/7|0);q+=(f+y)%7?7:0,0!==e.startDay&&0===f&&(q+=7);for(var D=1;D<=q;D++){var b=c[(D-1)%7],S=D-(f>=0?f:7+f),g=new Date(s,r,S),w=S<1||S>y,M="",L='<span class="qs-num">'+S+"</span>";if(w)M="qs-empty",L="";else{var N=n&&g<n||a&&g>a||l.includes(+v(g)),x=c[6],Y=c[0],C=b===x||b===Y,P=d&&!N&&S===u.getDate();N=N||i&&C,M=N?"qs-disabled":P?"qs-current":""}+g!=+o||w||(M+=" qs-active"),m.push('<div class="qs-square qs-num '+b+" "+M+'">'+L+"</div>")}var k=c.map(function(t){return'<div class="qs-square qs-day">'+t+"</div>"}).concat(m);if(k.length%7!=0)throw"Calendar not constructed properly. The # of squares should be a multiple of 7.";return k.unshift('<div class="qs-squares">'),k.push("</div>"),k.join("")}function i(t){return'\n      <div class="qs-overlay qs-hidden">\n        <div class="qs-close">&#10005;</div>\n        <input type="number" class="qs-overlay-year" placeholder="'+t.overlayPlaceholder+'" />\n        <div class="qs-submit qs-disabled">'+t.overlayButton+"</div>\n      </div>\n    "}function c(t,e){var n=e.currentMonth,a=e.currentYear,o=e.calendar,s=e.el,r=e.onSelect,i=o.querySelector(".qs-active"),c=t.textContent;e.dateSelected=new Date(a,n,c),i&&i.classList.remove("qs-active"),t.classList.add("qs-active"),l(s,e),m(e),r&&r(e)}function l(t,e){if(!e.nonInput)return e.formatter?e.formatter(t,e.dateSelected):void(t.value=e.dateSelected.toDateString())}function u(t,e,n){n?e.currentYear=n:(e.currentMonth+=t.contains("qs-right")?1:-1,12===e.currentMonth?(e.currentMonth=0,e.currentYear++):-1===e.currentMonth&&(e.currentMonth=11,e.currentYear--)),o(new Date(e.currentYear,e.currentMonth,1),e),e.currentMonthName=e.months[e.currentMonth],e.onMonthChange&&e.onMonthChange(e)}function d(t){if(!t.noPosition){var e=t.el,n=t.calendar,a=t.position,o=t.parent,s=a.top,r=a.right;if(a.centered)return n.classList.add("qs-centered");var i=o.getBoundingClientRect(),c=e.getBoundingClientRect(),l=n.getBoundingClientRect(),u=c.top-i.top+o.scrollTop,d="\n      top:"+(u-(s?l.height:-1*c.height))+"px;\n      left:"+(c.left-i.left+(r?c.width-l.width:0))+"px;\n    ";n.setAttribute("style",d)}}function h(t,e){if(!p(t))throw"`setDate` needs a JavaScript Date object.";t=v(t),this.currentYear=t.getFullYear(),this.currentMonth=t.getMonth(),this.currentMonthName=this.months[t.getMonth()],this.dateSelected=e?void 0:t,!e&&l(this.el,this),o(t,this),e&&(this.el.value="")}function f(){this.setDate(this.startDate,!0)}function p(t){return["[object Date]"==={}.toString.call(t),"Invalid Date"!==t.toString()].every(Boolean)}function v(t){return t?new Date(t.toDateString()):t}function y(){var t=this.calendar,e=this.parent,n=this.el;S.forEach(function(t){window.removeEventListener(t,D)}),t.remove(),t.hasOwnProperty("parentStyle")&&(e.style.position=""),b=b.filter(function(t){return t!==n})}function m(t){t.calendar.classList.add("qs-hidden"),t.onHide&&t.onHide(t)}function q(t){t.calendar.classList.remove("qs-hidden"),d(t),t.onShow&&t.onShow(t)}function D(t){function e(e){var o=e.calendar,s=l.classList,r=o.querySelector(".qs-month-year"),d=s.contains("qs-close");if(s.contains("qs-num")){var h="SPAN"===l.nodeName?l.parentNode:l;!["qs-disabled","qs-active","qs-empty"].some(function(t){return h.classList.contains(t)})&&c(h,e)}else if(s.contains("qs-arrow"))u(s,e);else if(i.includes(r)||d)n(o,d,e);else if(l.classList.contains("qs-submit")){var f=o.querySelector(".qs-overlay-year");a(t,f,e)}}function n(t,e,n){[".qs-overlay",".qs-controls",".qs-squares"].forEach(function(e,n){t.querySelector(e).classList.toggle(n?"qs-blur":"qs-hidden")});var a=t.querySelector(".qs-overlay-year");e?a.value="":a.focus()}function a(t,e,n){var a=isNaN((new Date).setFullYear(e.value||void 0));if(13===t.which||"click"===t.type){if(a||e.classList.contains("qs-disabled"))return;u(null,n,e.value)}else{n.calendar.querySelector(".qs-submit").classList[a?"add":"remove"]("qs-disabled")}}if(!this.isMobile||!this.disableMobile){if(!t.path){for(var o=t.target,s=[];o!==document;)s.push(o),o=o.parentNode;t.path=s}var r=t.type,i=t.path,l=t.target,d=this.calendar,h=this.el,f=d.classList,p=f.contains("qs-hidden"),v=i.includes(d);if("keydown"===r){var y=d.querySelector(".qs-overlay"),D=!y.classList.contains("qs-hidden");if(13===t.which&&D)return t.stopPropagation(),a(t,l,this);if(27===t.which&&D)return n(d,!0,this);if(9!==t.which)return}if("focusin"===r)return l===h&&q(this);this.noPosition?v?e(this):p?q(this):m(this):p?l===h&&q(this):"click"===r&&v?e(this):"input"===r?a(t,l,this):l!==h&&m(this)}}Array.prototype.includes||(Array.prototype.includes=function(t){return this.reduce(function(e,n){return e||n===t},!1)});var b=[],S=["click","focusin","keydown","input"],g=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],w=["January","February","March","April","May","June","July","August","September","October","November","December"],M={t:"top",r:"right",b:"bottom",l:"left",c:"centered"};return t});
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1619,7 +1644,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1671,7 +1696,7 @@ function isValidTransaction(transaction) {
 }
 
 const parseOFXfile = function (filename, callback) {
-  const fs = __webpack_require__(30);
+  const fs = __webpack_require__(11);
 
   const path = __webpack_require__(2);
 
@@ -1711,12 +1736,6 @@ const parseOFXfile = function (filename, callback) {
 module.exports = {
   parseOFXfile: parseOFXfile
 };
-
-/***/ }),
-/* 30 */
-/***/ (function(module, exports) {
-
-module.exports = require("fs");
 
 /***/ }),
 /* 31 */
