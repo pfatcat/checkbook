@@ -1,4 +1,3 @@
-
 /*
 
 SELECT t.id,
@@ -22,6 +21,7 @@ FROM payee p
 WHERE p.name = ?
 
 */
+
 BEGIN;
 
 DROP TABLE IF EXISTS transactions;
