@@ -176,8 +176,19 @@ const importQIF = function(){
           return;
       }
 
-      const transactions = data.split("^")
-      console.dir(transactions)
+      let all_transactions = data.substring(data.indexOf("D") - 1, data.length)
+      const arr_str_transactions = all_transactions.split("^")
+      //console.dir(transactions)
+
+      let parsedTransactions = []
+      for(let i=0; i< arr_str_transactions.length; i++){
+
+        let transaction = arr_str_transactions[i].split(/\r?\n/)
+        console.dir(transaction)
+        parsedTransactions.push(transaction)
+      }
+
+      console.dir(parsedTransactions)
   })
 }
 
