@@ -881,6 +881,33 @@ const getAllCategoriesPromise = function () {
   });
 };
 
+const createCategory = function (category, callback) {
+  const sql = `INSERT INTO categories(id, name) VALUES(?,?)`;
+  const params = [category.id, category.name];
+
+  _repo.default.executeStatement(sql, params, function (error) {
+    callback(error);
+  });
+};
+
+const findOrCreateCategoryPromise = function (categoryName) {
+  return new Promise(function (resolve, reject) {
+    getCategoryByName(categoryName, function (category) {
+      if (category) {
+        return resolve(category);
+      }
+
+      const newCategory = {
+        id: utilities.createGuid(),
+        name: categoryName
+      };
+      createCategory(newCategory); //TODO: handle errors
+
+      resolve(newCategory);
+    });
+  });
+};
+
 module.exports = {
   getCategoryByName: getCategoryByName,
   getAllCategories: getAllCategories,
@@ -989,7 +1016,7 @@ exports = module.exports = __webpack_require__(7)(false);
 
 
 // module
-exports.push([module.i, "html,\nbody {\n  width: 100%;\n  height: 100%;\n  margin: 0;\n  padding: 0;\n}\n\nbody {\n  /* display: flex; */\n  justify-content: center;\n  align-items: center;\n  font-family: sans-serif;\n  color: #525252;\n}\n\na {\n  text-decoration: none;\n  color: #cb3837;\n}\n\ninput:focus::-webkit-input-placeholder { color:transparent; }\ninput:focus:-moz-placeholder { color:transparent; } /* FF 4-18 */\ninput:focus::-moz-placeholder { color:transparent; } /* FF 19+ */\ninput:focus:-ms-input-placeholder { color:transparent; } /* IE 10+ */\n\n.container {\n  text-align: center;\n  padding: 10px;\n}\n\n.register{\n  width: 80%;\n  display: flex;\n}\n\n.record {\n  width: 100%;\n  border: 1px solid #000000;\n  text-align: left;\n}\n\n.record #date{\n  width: 15%; display: inline-block;\n}\n\n.record #payee_category_memo{\n  width: 70%;\n  display: inline-block;\n  border-left: 1px solid #000000;\n  border-right: 1px solid #000000;\n}\n\n.record #category_memo{\n  border-top: 1px solid #000000;\n}\n\n.record #category_memo #category{\n  display: inline-block;\n  border-right: 1px solid #000000;\n  width: 50%\n}\n\n.record #category_memo #memo{\n  display: inline-block;\n  width: 48%;\n}\n\n.record #amount{\n  display: inline-block;\n  width: 10%;\n}\n\n.record.header {\n  font-weight: bold;\n}\n\n.record.input input {\n  /*color: rgb(185, 178, 178);\n  font-style: italic;*/\n  outline: none;\n  box-shadow: none;\n  width: 99%;\n}\n\n.record.input #amount{\n  width: 12%;\n}\n\n.record.input #txt_amount{\n  width: 30%;\n}\n\n#map_import{\n  display: none;\n  position:fixed;\n  top: 50%;\n  left: 50%;\n  width:50em;\n  height:30em;\n  margin-top: -15em; /*set to a negative number 1/2 of your height*/\n  margin-left: -25em; /*set to a negative number 1/2 of your width*/\n  border: 1px solid #ccc;\n  background-color: #f3f3f3;\n}\n\n#mappingButtons{\n  position:absolute;\n  bottom:0;\n  right:0;\n}\n\n\n#transactionMapping{\n  overflow:scroll;\n  height: 25em;\n}\n\n#transactionMapping .mappingHeader div{\n  display: inline-block;\n}\n\n#transactionMapping .mapping div{\n  display: inline-block;\n}\n\n\n#transactionMapping .mapping .sourcePayee{\n  width: 50%;\n}\n\n#transactionMapping .mapping .targetPayee{\n  width: 30%;\n}\n\n#transactionMapping .mapping .newPayee{\n  width: 15%;\n}\n\n#ofx_transactions{\n  display: none;\n}\n\n", ""]);
+exports.push([module.i, "html,\r\nbody {\r\n  width: 100%;\r\n  height: 100%;\r\n  margin: 0;\r\n  padding: 0;\r\n}\r\n\r\nbody {\r\n  /* display: flex; */\r\n  justify-content: center;\r\n  align-items: center;\r\n  font-family: sans-serif;\r\n  color: #525252;\r\n}\r\n\r\na {\r\n  text-decoration: none;\r\n  color: #cb3837;\r\n}\r\n\r\ninput:focus::-webkit-input-placeholder { color:transparent; }\r\ninput:focus:-moz-placeholder { color:transparent; } /* FF 4-18 */\r\ninput:focus::-moz-placeholder { color:transparent; } /* FF 19+ */\r\ninput:focus:-ms-input-placeholder { color:transparent; } /* IE 10+ */\r\n\r\n.container {\r\n  text-align: center;\r\n  padding: 10px;\r\n}\r\n\r\n.register{\r\n  width: 80%;\r\n  display: flex;\r\n}\r\n\r\n.record {\r\n  width: 100%;\r\n  border: 1px solid #000000;\r\n  text-align: left;\r\n}\r\n\r\n.record #date{\r\n  width: 15%; display: inline-block;\r\n}\r\n\r\n.record #payee_category_memo{\r\n  width: 70%;\r\n  display: inline-block;\r\n  border-left: 1px solid #000000;\r\n  border-right: 1px solid #000000;\r\n}\r\n\r\n.record #category_memo{\r\n  border-top: 1px solid #000000;\r\n}\r\n\r\n.record #category_memo #category{\r\n  display: inline-block;\r\n  border-right: 1px solid #000000;\r\n  width: 50%\r\n}\r\n\r\n.record #category_memo #memo{\r\n  display: inline-block;\r\n  width: 48%;\r\n}\r\n\r\n.record #amount{\r\n  display: inline-block;\r\n  width: 10%;\r\n}\r\n\r\n.record.header {\r\n  font-weight: bold;\r\n}\r\n\r\n.record.input input {\r\n  /*color: rgb(185, 178, 178);\r\n  font-style: italic;*/\r\n  outline: none;\r\n  box-shadow: none;\r\n  width: 99%;\r\n}\r\n\r\n.record.input #amount{\r\n  width: 12%;\r\n}\r\n\r\n.record.input #txt_amount{\r\n  width: 30%;\r\n}\r\n\r\n#map_import{\r\n  display: none;\r\n  position:fixed;\r\n  top: 50%;\r\n  left: 50%;\r\n  width:50em;\r\n  height:30em;\r\n  margin-top: -15em; /*set to a negative number 1/2 of your height*/\r\n  margin-left: -25em; /*set to a negative number 1/2 of your width*/\r\n  border: 1px solid #ccc;\r\n  background-color: #f3f3f3;\r\n}\r\n\r\n#mappingButtons{\r\n  position:absolute;\r\n  bottom:0;\r\n  right:0;\r\n}\r\n\r\n\r\n#transactionMapping{\r\n  overflow:scroll;\r\n  height: 25em;\r\n}\r\n\r\n#transactionMapping .mappingHeader div{\r\n  display: inline-block;\r\n}\r\n\r\n#transactionMapping .mapping div{\r\n  display: inline-block;\r\n}\r\n\r\n\r\n#transactionMapping .mapping .sourcePayee{\r\n  width: 50%;\r\n}\r\n\r\n#transactionMapping .mapping .targetPayee{\r\n  width: 30%;\r\n}\r\n\r\n#transactionMapping .mapping .newPayee{\r\n  width: 15%;\r\n}\r\n\r\n#ofx_transactions{\r\n  display: none;\r\n}\r\n\r\n", ""]);
 
 // exports
 
@@ -1266,6 +1293,8 @@ var _payee_lookup = _interopRequireDefault(__webpack_require__(29));
 
 var _ofx_importer = _interopRequireDefault(__webpack_require__(30));
 
+var _qif_importer = _interopRequireDefault(__webpack_require__(32));
+
 var _enums = _interopRequireDefault(__webpack_require__(31));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
@@ -1280,6 +1309,7 @@ function findOrCreatePayeeId(payeeName, callback) {
       };
 
       _payee.default.createPayee(payee, function (err) {
+        //TODO: handle errors
         callback(payee.id);
         return;
       });
@@ -1421,30 +1451,9 @@ const newPayee = function () {
 };
 
 const importQIF = function () {
-  const fs = __webpack_require__(11);
+  const filename = '../src/data/sample.qif';
 
-  const path = __webpack_require__(2);
-
-  const filepath = path.resolve(__dirname, '../src/data/sample.qif');
-  fs.readFile(filepath, 'utf-8', (err, data) => {
-    if (err) {
-      alert("An error ocurred reading the file :" + err.message);
-      return;
-    }
-
-    let all_transactions = data.substring(data.indexOf("D") - 1, data.length);
-    const arr_str_transactions = all_transactions.split("^"); //console.dir(transactions)
-
-    let parsedTransactions = [];
-
-    for (let i = 0; i < arr_str_transactions.length; i++) {
-      let transaction = arr_str_transactions[i].split(/\r?\n/);
-      console.dir(transaction);
-      parsedTransactions.push(transaction);
-    }
-
-    console.dir(parsedTransactions);
-  });
+  _qif_importer.default.importQIFfile(filename);
 };
 /**** PRIVATE FUNCTIONS ****/
 
@@ -1759,6 +1768,88 @@ module.exports = {
     "uncategorized": 'f74a549c-3d46-4efd-95bb-935c642b649b'
   }
 };
+
+/***/ }),
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const importQIFfile = function (filename) {
+  const fs = __webpack_require__(11);
+
+  const path = __webpack_require__(2);
+
+  const filepath = path.resolve(__dirname, filename);
+  fs.readFile(filepath, 'utf-8', (err, data) => {
+    if (err) {
+      alert("An error ocurred reading the file :" + err.message);
+      return;
+    }
+
+    let all_transactions = data.substring(data.indexOf("D") - 1, data.length);
+    const arr_str_transactions = all_transactions.split("^"); //console.dir(transactions)
+
+    let parsedTransactions = [];
+
+    for (let i = 0; i < arr_str_transactions.length; i++) {
+      let transaction_elements = arr_str_transactions[i].split(/\r?\n/); //console.dir(arr_transaction)
+
+      let parsedTransaction = {};
+
+      for (let i = 0; i < transaction_elements.length; i++) {
+        let transaction_element = transaction_elements[i]; //console.dir(transaction_element)
+
+        switch (transaction_element.substring(0, 1)) {
+          case "D":
+            parsedTransaction.transaction_date = parseDate(transaction_element);
+            break;
+
+          case "U":
+            parsedTransaction.amount = transaction_element.replace("U", "");
+            break;
+
+          case "P":
+            parsedTransaction.payee_name = transaction_element.replace("P", "");
+            break;
+
+          case "L":
+            parsedTransaction.category_name = transaction_element.replace("L", "");
+            break;
+
+          case "M":
+            parsedTransaction.memo = transaction_element.replace("M", "");
+            break;
+
+          default:
+            break;
+        }
+      }
+
+      parsedTransactions.push(parsedTransaction);
+    }
+
+    console.dir(parsedTransactions);
+  });
+};
+
+module.exports = {
+  importQIFfile: importQIFfile
+};
+
+function parseDate(strDate) {
+  return strDate.replace("D", "").replace("'", "/").replace(" ", "");
+}
+/*
+    const params = [newTransaction.id,
+                    newTransaction.transaction_date,
+                    newTransaction.payee_id,
+                    newTransaction.memo,
+                    newTransaction.amount,
+                    newTransaction.reference_code,
+                    newTransaction.payee_id]
+                    */
 
 /***/ })
 /******/ ]);

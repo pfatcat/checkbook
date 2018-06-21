@@ -6,6 +6,7 @@ import utilities from "../helpers/utilities.js"
 import payee_service from "../services/payee.js"
 import payee_lookup_service from "../services/payee_lookup.js"
 import ofxImporter_service from "../services/ofx_importer.js"
+import qifImporter_service from "../services/qif_importer.js"
 import enums from "../data/enums.js"
 
 
@@ -14,6 +15,7 @@ function findOrCreatePayeeId(payeeName, callback){
     if(!payee_id){
       const payee = {id: utilities.createGuid(), name: payeeName, defaultCategoryId: enums.categories.uncategorized}
       payee_service.createPayee(payee, function(err){
+        //TODO: handle errors
         callback(payee.id)
         return
       })
@@ -166,30 +168,8 @@ const newPayee = function(){
 }
 
 const importQIF = function(){
-  const fs = require('fs');
-  const path = require('path')
-  const filepath = path.resolve(__dirname, '../src/data/sample.qif')
-
-  fs.readFile(filepath, 'utf-8', (err, data) => {
-      if(err){
-          alert("An error ocurred reading the file :" + err.message);
-          return;
-      }
-
-      let all_transactions = data.substring(data.indexOf("D") - 1, data.length)
-      const arr_str_transactions = all_transactions.split("^")
-      //console.dir(transactions)
-
-      let parsedTransactions = []
-      for(let i=0; i< arr_str_transactions.length; i++){
-
-        let transaction = arr_str_transactions[i].split(/\r?\n/)
-        console.dir(transaction)
-        parsedTransactions.push(transaction)
-      }
-
-      console.dir(parsedTransactions)
-  })
+  const filename = '../src/data/sample.qif'
+  qifImporter_service.importQIFfile(filename)
 }
 
 /**** PRIVATE FUNCTIONS ****/

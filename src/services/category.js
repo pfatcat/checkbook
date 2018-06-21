@@ -35,6 +35,35 @@ const getAllCategoriesPromise = function(){
   })
 }
 
+const createCategory = function(category, callback){
+
+  const sql = `INSERT INTO categories(id, name) VALUES(?,?)`
+
+  const params = [category.id, category.name]
+
+  repo.executeStatement(sql, params, function(error){
+      callback(error);
+  });
+}
+
+const findOrCreateCategoryPromise = function(categoryName){
+  return new Promise(function(resolve, reject) {
+    getCategoryByName(categoryName, function(category){
+        if(category){
+          return resolve(category)
+        }
+        const newCategory = {
+          id: utilities.createGuid(),
+          name: categoryName
+        }
+        createCategory(newCategory)
+
+        //TODO: handle errors
+        resolve(newCategory)
+    })
+  })
+}
+
 module.exports = {
   getCategoryByName: getCategoryByName,
   getAllCategories: getAllCategories,
