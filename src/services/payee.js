@@ -82,6 +82,34 @@ const createPayeePromise = function(payee){
   return createPayeePromise
 }
 
+
+const findOrCreatePayee = function(payeeName, default_category_id, callback){
+  getPayeeByName(payeeName, function(payee){
+    if(payee){
+      return callback(payee)
+    }
+    const newPayee = {
+      id: utilities.createGuid(),
+      name: payeeName,
+      default_category_id: default_category_id
+    }
+    createPayee(newPayee, function(error){
+        console.dir(error)
+    })
+
+    //TODO: handle errors...this fire and forget could cause foreign key problems
+    callback(newPayee)
+  })
+}
+
+const findOrCreatePayeePromise = function(payeeName, default_category_id){
+  return new Promise(function(resolve, reject) {
+    findOrCreatePayee(payeeName, default_category_id, function(payee){
+      resolve(payee)
+    })
+  })
+}
+
 const getAllPayeesPromise = function(){
   return new Promise(function(resolve, reject) {
     getAllPayees(function(payees,error){
@@ -107,5 +135,9 @@ module.exports = {
 
   getAllPayees: getAllPayees,
 
-  getAllPayeesPromise: getAllPayeesPromise
+  getAllPayeesPromise: getAllPayeesPromise,
+
+  findOrCreatePayee: findOrCreatePayee,
+
+  findOrCreatePayeePromise: findOrCreatePayeePromise
 }

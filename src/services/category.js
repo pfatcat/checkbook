@@ -1,3 +1,4 @@
+import utilities from "../helpers/utilities.js";
 import repo from "../data/repo";
 
 const getCategoryByName = function(category_name, callback){
@@ -46,20 +47,28 @@ const createCategory = function(category, callback){
   });
 }
 
+const findOrCreateCategory = function(categoryName, callback){
+    getCategoryByName(categoryName, function(category){
+      if(category){
+        return callback(category)
+      }
+      const newCategory = {
+        id: utilities.createGuid(),
+        name: categoryName
+      }
+      createCategory(newCategory, function(error){
+        console.dir(error)
+      })
+
+      //TODO: handle errors
+      callback(newCategory)
+  })
+}
+
 const findOrCreateCategoryPromise = function(categoryName){
   return new Promise(function(resolve, reject) {
-    getCategoryByName(categoryName, function(category){
-        if(category){
-          return resolve(category)
-        }
-        const newCategory = {
-          id: utilities.createGuid(),
-          name: categoryName
-        }
-        createCategory(newCategory)
-
-        //TODO: handle errors
-        resolve(newCategory)
+    findOrCreateCategory(categoryName, function(category){
+      resolve(category)
     })
   })
 }
@@ -67,5 +76,7 @@ const findOrCreateCategoryPromise = function(categoryName){
 module.exports = {
   getCategoryByName: getCategoryByName,
   getAllCategories: getAllCategories,
-  getAllCategoriesPromise: getAllCategoriesPromise
+  getAllCategoriesPromise: getAllCategoriesPromise,
+  findOrCreateCategoryPromise: findOrCreateCategoryPromise,
+  findOrCreateCategory: findOrCreateCategory
 }
