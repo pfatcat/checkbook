@@ -1,6 +1,6 @@
 import utilities from "../helpers/utilities.js";
 import repo from "../data/repo";
-import enums from "../data/enums.js"
+import enums from "../helpers/enums.js"
 
 const getCategoryByName = function (category_name, callback) {
 

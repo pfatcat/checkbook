@@ -7,7 +7,7 @@ import payee_service from "../services/payee.js"
 import payee_lookup_service from "../services/payee_lookup.js"
 import ofxImporter_service from "../services/ofx_importer.js"
 import qifImporter_service from "../services/qif_importer.js"
-import enums from "../data/enums.js"
+import enums from "../helpers/enums.js"
 
 
 function findOrCreatePayeeId(payeeName, callback) {
@@ -59,6 +59,7 @@ const mapOFXTransactions = function (filename) {
   const categoriesPromise = category_service.getAllCategoriesPromise()
 
   const transactionPromise = new Promise(function (resolve, reject) {
+    const filename = '../src/data/samples/suntrust_export.ofx'
     ofxImporter_service.parseOFXfile(filename, resolve)
   });
 
@@ -168,7 +169,7 @@ const newPayee = function () {
 }
 
 const importQIF = function () {
-  const filename = '../src/data/sample.qif'
+  const filename = '../src/data/samples/sample.qif'
   qifImporter_service.importQIFfile(filename, function () {
     loadTransactions()
   })

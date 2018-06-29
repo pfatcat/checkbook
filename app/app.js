@@ -1452,6 +1452,8 @@ const mapOFXTransactions = function (filename) {
   const categoriesPromise = _category.default.getAllCategoriesPromise();
 
   const transactionPromise = new Promise(function (resolve, reject) {
+    const filename = '../src/data/samples/suntrust_export.ofx';
+
     _ofx_importer.default.parseOFXfile(filename, resolve);
   });
   const promises = [payeesPromise, categoriesPromise, transactionPromise];
@@ -1554,7 +1556,7 @@ const newPayee = function () {
 };
 
 const importQIF = function () {
-  const filename = '../src/data/sample.qif';
+  const filename = '../src/data/samples/sample.qif';
 
   _qif_importer.default.importQIFfile(filename, function () {
     loadTransactions();
@@ -1823,7 +1825,7 @@ const parseOFXfile = function (filename, callback) {
 
   const path = __webpack_require__(2);
 
-  const filepath = path.resolve(__dirname, '../src/data/suntrust_export.ofx');
+  const filepath = path.resolve(__dirname, filename);
   fs.readFile(filepath, 'utf-8', (err, data) => {
     if (err) {
       alert("An error ocurred reading the file :" + err.message);

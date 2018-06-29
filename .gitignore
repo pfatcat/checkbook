@@ -3,7 +3,9 @@
 bower_components
 node_modules
 dist
+/src/data/samples
 
 #files
 *.tgz
 *.log
+/src/data/sample.qif

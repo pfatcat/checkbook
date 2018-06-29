@@ -44,7 +44,7 @@ function isValidTransaction(transaction){
 const parseOFXfile = function(filename, callback){
   const fs = require('fs');
   const path = require('path')
-  const filepath = path.resolve(__dirname, '../src/data/suntrust_export.ofx')
+  const filepath = path.resolve(__dirname, filename)
 
   fs.readFile(filepath, 'utf-8', (err, data) => {
       if(err){
