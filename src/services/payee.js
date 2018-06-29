@@ -72,6 +72,7 @@ const createPayeePromise = function(payee){
   const createPayeePromise = new Promise(function(resolve, reject) {
     createPayee(payee, function(error){
       if(error){
+        console.error(error)
         reject(error)
         return
       }
@@ -94,7 +95,9 @@ const findOrCreatePayee = function(payeeName, default_category_id, callback){
       default_category_id: default_category_id
     }
     createPayee(newPayee, function(error){
-        console.dir(error)
+      if(error){
+        console.error(error)
+      }
     })
 
     //TODO: handle errors...this fire and forget could cause foreign key problems

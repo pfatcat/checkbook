@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 17);
+/******/ 	return __webpack_require__(__webpack_require__.s = 18);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -201,6 +201,7 @@ const createPayeePromise = function (payee) {
   const createPayeePromise = new Promise(function (resolve, reject) {
     createPayee(payee, function (error) {
       if (error) {
+        console.error(error);
         reject(error);
         return;
       }
@@ -223,7 +224,9 @@ const findOrCreatePayee = function (payeeName, default_category_id, callback) {
       default_category_id: default_category_id
     };
     createPayee(newPayee, function (error) {
-      console.dir(error);
+      if (error) {
+        console.error(error);
+      }
     }); //TODO: handle errors...this fire and forget could cause foreign key problems
 
     callback(newPayee);
@@ -270,7 +273,7 @@ module.exports = {
 "use strict";
 
 
-const Database = __webpack_require__(27);
+const Database = __webpack_require__(28);
 
 const path = __webpack_require__(2);
 
@@ -328,86 +331,108 @@ module.exports = {"name":"development","description":"Add here any environment s
 "use strict";
 
 
-var _utilities = _interopRequireDefault(__webpack_require__(1));
-
 var _repo = _interopRequireDefault(__webpack_require__(4));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const getCategoryByName = function (category_name, callback) {
-  const sql = `SELECT *
-            FROM categories
-            WHERE name = ?`;
-  const params = [category_name];
-
-  _repo.default.getRow(sql, params, function (category) {
-    callback(category);
-  });
-};
-
-const getAllCategories = function (callback) {
-  const sql = `SELECT * FROM categories`;
+const getTransactions = function (render_callback) {
+  const sql = `SELECT t.id,
+                      p.name as payee,
+                      c.name as category,
+                      t.transaction_date as date,
+                      t.amount,
+                      t.memo
+                FROM transactions t
+                LEFT JOIN categories c
+                        ON IFNULL(t.category_id, 'f74a549c-3d46-4efd-95bb-935c642b649b') = c.id
+                LEFT JOIN payees p
+                        ON t.payee_id = p.id
+                ORDER BY t.transaction_date`;
   const params = [];
 
-  _repo.default.getData(sql, params, function (categories, error) {
-    callback(categories, error);
+  _repo.default.getData(sql, params, function (data) {
+    render_callback(data);
   });
 };
 
-const getAllCategoriesPromise = function () {
-  return new Promise(function (resolve, reject) {
-    getAllCategories(function (categories, error) {
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      resolve(categories);
-    });
-  });
-};
-
-const createCategory = function (category, callback) {
-  const sql = `INSERT INTO categories(id, name) VALUES(?,?)`;
-  const params = [category.id, category.name];
+const saveTransaction = function (newTransaction, callback) {
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
+                  VALUES (?, ?, ?, ?, ?, ?, ?);`;
+  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code];
 
   _repo.default.executeStatement(sql, params, function (error) {
     callback(error);
   });
 };
 
-const findOrCreateCategory = function (categoryName, callback) {
-  getCategoryByName(categoryName, function (category) {
-    if (category) {
-      return callback(category);
-    }
+const saveOFXTransaction = function (newTransaction, callback) {
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
+                  SELECT ?, ?, ?, ?, p.default_category_id, ?, ?
+                  FROM payees p
+                  WHERE p.id = ?;`;
+  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.amount, newTransaction.reference_code, newTransaction.payee_id];
 
-    const newCategory = {
-      id: _utilities.default.createGuid(),
-      name: categoryName
-    };
-    createCategory(newCategory, function (error) {
-      console.dir(error);
-    }); //TODO: handle errors
-
-    callback(newCategory);
+  _repo.default.executeStatement(sql, params, function (error) {
+    callback(error);
   });
 };
 
-const findOrCreateCategoryPromise = function (categoryName) {
+const saveQIFTransaction = function (newTransaction, callback) {
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount, reference_code)
+               SELECT ?, ?, ?, ?, ?, ?, ?
+               WHERE NOT EXISTS (SELECT 1 FROM transactions WHERE reference_code = ?);`;
+  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code, newTransaction.reference_code];
+
+  _repo.default.executeStatement(sql, params, function (error) {
+    callback(error);
+  });
+};
+
+const saveOFXTransactionPromise = function (transaction) {
   return new Promise(function (resolve, reject) {
-    findOrCreateCategory(categoryName, function (category) {
-      resolve(category);
+    saveOFXTransaction(transaction, function (error) {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
     });
   });
 };
 
+const saveQIFTransactionPromise = function (transaction) {
+  return new Promise(function (resolve, reject) {
+    saveQIFTransaction(transaction, function (error) {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+};
+
+const getTransactionByReferenceCode = function (reference_code, callback) {
+  const sql = `SELECT * FROM transactions WHERE reference_code = ?`;
+  const params = [reference_code];
+
+  _repo.default.getRow(sql, params, function (payee, error) {
+    callback(payee, error);
+  });
+};
+
 module.exports = {
-  getCategoryByName: getCategoryByName,
-  getAllCategories: getAllCategories,
-  getAllCategoriesPromise: getAllCategoriesPromise,
-  findOrCreateCategoryPromise: findOrCreateCategoryPromise,
-  findOrCreateCategory: findOrCreateCategory
+  getTransactions: getTransactions,
+  getTransactionByReferenceCode: getTransactionByReferenceCode,
+  saveTransaction: saveTransaction,
+  saveOFXTransaction: saveOFXTransaction,
+  saveQIFTransaction: saveQIFTransaction,
+  saveOFXTransactionPromise: saveOFXTransactionPromise,
+  saveQIFTransactionPromise: saveQIFTransactionPromise
+  /**** PRIVATE FUNCTIONS ****/
+
 };
 
 /***/ }),
@@ -549,7 +574,7 @@ var singleton = null;
 var	singletonCounter = 0;
 var	stylesInsertedAtTop = [];
 
-var	fixUrls = __webpack_require__(20);
+var	fixUrls = __webpack_require__(21);
 
 module.exports = function(list, options) {
 	if (typeof DEBUG !== "undefined" && DEBUG) {
@@ -871,115 +896,152 @@ function updateLink (link, options, obj) {
 "use strict";
 
 
-var _repo = _interopRequireDefault(__webpack_require__(4));
-
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
-var _category = _interopRequireDefault(__webpack_require__(7));
+var _repo = _interopRequireDefault(__webpack_require__(4));
 
-var _payee = _interopRequireDefault(__webpack_require__(3));
+var _enums = _interopRequireDefault(__webpack_require__(11));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const get_transactions = function (render_callback) {
-  const sql = `SELECT t.id,
-                      p.name as payee,
-                      c.name as category,
-                      t.transaction_date as date,
-                      t.amount,
-                      t.memo
-                FROM transactions t
-                LEFT JOIN categories c
-                        ON IFNULL(t.category_id, 'f74a549c-3d46-4efd-95bb-935c642b649b') = c.id
-                LEFT JOIN payees p
-                        ON t.payee_id = p.id
-                ORDER BY t.transaction_date`;
+const getCategoryByName = function (category_name, callback) {
+  const sql = `SELECT *
+            FROM categories
+            WHERE name = ?`;
+  const params = [category_name];
+
+  _repo.default.getRow(sql, params, function (category) {
+    callback(category);
+  });
+};
+
+const getAllCategories = function (callback) {
+  const sql = `SELECT * FROM categories`;
   const params = [];
 
-  _repo.default.getData(sql, params, function (data) {
-    render_callback(data);
+  _repo.default.getData(sql, params, function (categories, error) {
+    callback(categories, error);
   });
 };
 
-const saveTransaction = function (newTransaction, callback) {
-  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
-                  VALUES (?, ?, ?, ?, ?, ?, ?);`;
-  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code];
+const getAllCategoriesPromise = function () {
+  return new Promise(function (resolve, reject) {
+    getAllCategories(function (categories, error) {
+      if (error) {
+        reject(error);
+        return;
+      }
 
-  _repo.default.executeStatement(sql, params, function (response) {
-    callback();
+      resolve(categories);
+    });
   });
 };
 
-const save_ofx_transaction = function (newTransaction, callback) {
-  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
-                  SELECT ?, ?, ?, ?, p.default_category_id, ?, ?
-                  FROM payees p
-                  WHERE p.id = ?;`;
-  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.amount, newTransaction.reference_code, newTransaction.payee_id];
+const createCategory = function (category, callback) {
+  const sql = `INSERT INTO categories(id, name) VALUES(?,?)`;
+  const params = [category.id, category.name];
 
   _repo.default.executeStatement(sql, params, function (error) {
     callback(error);
   });
 };
 
-const saveOFXTransactionPromise = function (transaction) {
-  return new Promise(function (resolve, reject) {
-    save_ofx_transaction(transaction, function (error) {
+const findOrCreateCategory = function (categoryName, callback, categoryLookups) {
+  if (!categoryName || categoryName == "") {
+    return _enums.default.categories.uncategorized;
+  }
+
+  const fetchedCategory = categoryLookups && categoryLookups[categoryName];
+
+  if (fetchedCategory) {
+    return callback(fetchedCategory);
+  }
+
+  getCategoryByName(categoryName, function (category) {
+    if (category) {
+      return callback(category);
+    }
+
+    const newCategory = {
+      id: _utilities.default.createGuid(),
+      name: categoryName
+    };
+    createCategory(newCategory, function (error) {
       if (error) {
+        console.error(error);
+        callback(null, error);
+        return;
+      }
+
+      if (categoryLookups) {
+        categoryLookups[newCategory.name] = newCategory;
+      }
+    }); //TODO: handle errors
+
+    callback(newCategory);
+  });
+};
+
+const findOrCreateCategoryPromise = function (categoryName) {
+  return new Promise(function (resolve, reject) {
+    findOrCreateCategory(categoryName, function (category, error) {
+      if (error) {
+        console.error(error);
         reject(error);
         return;
       }
 
-      resolve();
+      resolve(category);
     });
   });
 };
 
-const getTransactionByReferenceCode = function (reference_code, callback) {
-  const sql = `SELECT * FROM transactions WHERE reference_code = ?`;
-  const params = [reference_code];
-
-  _repo.default.getRow(sql, params, function (payee, error) {
-    callback(payee, error);
-  });
-};
-
 module.exports = {
-  get_transactions: get_transactions,
-  save_transaction: saveTransaction,
-  save_ofx_transaction: save_ofx_transaction,
-  saveOFXTransactionPromise: saveOFXTransactionPromise,
-  getTransactionByReferenceCode: getTransactionByReferenceCode
-  /**** PRIVATE FUNCTIONS ****/
-
+  getCategoryByName: getCategoryByName,
+  getAllCategories: getAllCategories,
+  getAllCategoriesPromise: getAllCategoriesPromise,
+  findOrCreateCategoryPromise: findOrCreateCategoryPromise,
+  findOrCreateCategory: findOrCreateCategory
 };
 
 /***/ }),
 /* 11 */
-/***/ (function(module, exports) {
-
-module.exports = require("fs");
-
-/***/ }),
-/* 12 */,
-/* 13 */,
-/* 14 */,
-/* 15 */,
-/* 16 */,
-/* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-__webpack_require__(18);
+module.exports = {
+  categories: {
+    "uncategorized": 'f74a549c-3d46-4efd-95bb-935c642b649b'
+  }
+};
 
-__webpack_require__(21);
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
 
-__webpack_require__(23);
+module.exports = require("fs");
+
+/***/ }),
+/* 13 */,
+/* 14 */,
+/* 15 */,
+/* 16 */,
+/* 17 */,
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+__webpack_require__(19);
+
+__webpack_require__(22);
 
 __webpack_require__(24);
+
+__webpack_require__(25);
 
 var _electron = __webpack_require__(0);
 
@@ -987,7 +1049,7 @@ var _fsJetpack = _interopRequireDefault(__webpack_require__(5));
 
 var _env = _interopRequireDefault(__webpack_require__(6));
 
-var _main2 = _interopRequireDefault(__webpack_require__(25));
+var _main2 = _interopRequireDefault(__webpack_require__(26));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1018,13 +1080,13 @@ document.querySelector("#app").style.display = "block"; //document.querySelector
 // process.versions.electron;
 
 /***/ }),
-/* 18 */
+/* 19 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(19);
+var content = __webpack_require__(20);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -1049,7 +1111,7 @@ if(false) {
 }
 
 /***/ }),
-/* 19 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(8)(false);
@@ -1063,7 +1125,7 @@ exports.push([module.i, "html,\r\nbody {\r\n  width: 100%;\r\n  height: 100%;\r\
 
 
 /***/ }),
-/* 20 */
+/* 21 */
 /***/ (function(module, exports) {
 
 
@@ -1158,13 +1220,13 @@ module.exports = function (css) {
 
 
 /***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // style-loader: Adds some css to the DOM by adding a <style> tag
 
 // load the styles
-var content = __webpack_require__(22);
+var content = __webpack_require__(23);
 if(typeof content === 'string') content = [[module.i, content, '']];
 // Prepare cssTransformation
 var transform;
@@ -1189,7 +1251,7 @@ if(false) {
 }
 
 /***/ }),
-/* 22 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 exports = module.exports = __webpack_require__(8)(false);
@@ -1203,7 +1265,7 @@ exports.push([module.i, ".qs-datepicker {\n  color: black;\n  position: absolute
 
 
 /***/ }),
-/* 23 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1262,7 +1324,7 @@ document.addEventListener("contextmenu", event => {
 }, false);
 
 /***/ }),
-/* 24 */
+/* 25 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1312,31 +1374,31 @@ const supportExternalLinks = event => {
 document.addEventListener("click", supportExternalLinks, false);
 
 /***/ }),
-/* 25 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
-var _main = _interopRequireDefault(__webpack_require__(26));
+var _main = _interopRequireDefault(__webpack_require__(27));
 
-var _transaction = _interopRequireDefault(__webpack_require__(10));
+var _transaction = _interopRequireDefault(__webpack_require__(7));
 
-var _category = _interopRequireDefault(__webpack_require__(7));
+var _category = _interopRequireDefault(__webpack_require__(10));
 
-var _datepicker = _interopRequireDefault(__webpack_require__(28));
+var _datepicker = _interopRequireDefault(__webpack_require__(29));
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
 var _payee = _interopRequireDefault(__webpack_require__(3));
 
-var _payee_lookup = _interopRequireDefault(__webpack_require__(29));
+var _payee_lookup = _interopRequireDefault(__webpack_require__(30));
 
-var _ofx_importer = _interopRequireDefault(__webpack_require__(30));
+var _ofx_importer = _interopRequireDefault(__webpack_require__(31));
 
-var _qif_importer = _interopRequireDefault(__webpack_require__(31));
+var _qif_importer = _interopRequireDefault(__webpack_require__(32));
 
-var _enums = _interopRequireDefault(__webpack_require__(32));
+var _enums = _interopRequireDefault(__webpack_require__(11));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1377,7 +1439,7 @@ const saveTransaction = function () {
       "amount": document.querySelector("#txt_amount").value
     };
 
-    _transaction.default.save_transaction(newTransaction, function (response) {
+    _transaction.default.saveTransaction(newTransaction, function (response) {
       loadTransactions();
       resetInput();
     });
@@ -1494,7 +1556,9 @@ const newPayee = function () {
 const importQIF = function () {
   const filename = '../src/data/sample.qif';
 
-  _qif_importer.default.importQIFfile(filename);
+  _qif_importer.default.importQIFfile(filename, function () {
+    loadTransactions();
+  });
 };
 /**** PRIVATE FUNCTIONS ****/
 
@@ -1528,14 +1592,13 @@ function wireUpEvents() {
 }
 
 function populateElements() {
-  _transaction.default.get_transactions(_main.default.render_transactions);
-
+  loadTransactions();
   buildDatePicker();
   buildCategoryList();
 }
 
 function loadTransactions() {
-  _transaction.default.get_transactions(_main.default.render_transactions);
+  _transaction.default.getTransactions(_main.default.render_transactions);
 }
 
 function closeMappingWindow() {
@@ -1570,7 +1633,7 @@ function buildCategoryList() {
 })();
 
 /***/ }),
-/* 26 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1663,20 +1726,20 @@ module.exports = {
 };
 
 /***/ }),
-/* 27 */
+/* 28 */
 /***/ (function(module, exports) {
 
 module.exports = require("better-sqlite3");
 
 /***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;!function(t,e){var n="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t};"object"===( false?"undefined":n(exports))?module.exports=e(): true?!(__WEBPACK_AMD_DEFINE_RESULT__ = (function(){return e()}).call(exports, __webpack_require__, exports, module),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)):t.datepicker=e()}(this,function(){"use strict";function t(t,a){var s=t.split?document.querySelector(t):t;a=e(a||n(),s,t);var r=s.parentElement,i=document.createElement("div"),c=a,u=c.startDate,d=c.dateSelected,p=s===document.body||s===document.querySelector("html"),v={el:s,parent:r,nonInput:"INPUT"!==s.nodeName,noPosition:p,position:!p&&a.position,startDate:u,dateSelected:d,disabledDates:a.disabledDates,minDate:a.minDate,maxDate:a.maxDate,noWeekends:!!a.noWeekends,calendar:i,currentMonth:(u||d).getMonth(),currentMonthName:(a.months||w)[(u||d).getMonth()],currentYear:(u||d).getFullYear(),setDate:h,reset:f,remove:y,onSelect:a.onSelect,onShow:a.onShow,onHide:a.onHide,onMonthChange:a.onMonthChange,formatter:a.formatter,months:a.months||w,days:a.customDays||g,startDay:a.startDay,overlayPlaceholder:a.overlayPlaceholder||"4-digit year",overlayButton:a.overlayButton||"Submit",disableMobile:a.disableMobile,isMobile:"ontouchstart"in window};return d&&l(s,v),i.classList.add("qs-datepicker"),i.classList.add("qs-hidden"),b.push(s),o(u||d,v),S.forEach(function(t){window.addEventListener(t,D.bind(v))}),"static"===getComputedStyle(r).position&&(r.style.position="relative"),r.appendChild(i),v}function e(t,e){if(b.includes(e))throw"A datepicker already exists on that element.";var n=t.position,o=t.maxDate,s=t.minDate,r=t.dateSelected,i=t.formatter,c=t.customMonths,l=t.customDays,u=t.overlayPlaceholder,d=t.overlayButton,h=t.startDay,f=t.disabledDates,y=+v(r);if(t.disabledDates=(f||[]).map(function(t){if(!p(t))throw'You supplied an invalid date to "options.disabledDates".';if(+v(t)===y)throw'"disabledDates" cannot contain the same date as "dateSelected".';return+v(t)}),n){if(!["tr","tl","br","bl","c"].some(function(t){return n===t}))throw'"options.position" must be one of the following: tl, tr, bl, br, or c.';t.position=a(n)}else t.position=a("bl");if(["startDate","dateSelected","minDate","maxDate"].forEach(function(e){if(t[e]){if(!p(t[e])||isNaN(+t[e]))throw'"options.'+e+'" needs to be a valid JavaScript Date object.';t[e]=v(t[e])}}),t.startDate=v(t.startDate||t.dateSelected||new Date),t.formatter="function"==typeof i?i:null,o<s)throw'"maxDate" in options is less than "minDate".';if(r){if(s>r)throw'"dateSelected" in options is less than "minDate".';if(o<r)throw'"dateSelected" in options is greater than "maxDate".'}if(["onSelect","onShow","onHide","onMonthChange"].forEach(function(e){t[e]="function"==typeof t[e]&&t[e]}),[c,l].forEach(function(e,n){if(e){var a=['"customMonths" must be an array with 12 strings.','"customDays" must be an array with 7 strings.'];if("[object Array]"!=={}.toString.call(e)||e.length!==(n?7:12))throw a[n];t[n?"days":"months"]=e}}),void 0!==h&&+h&&+h>0&&+h<7){var m=(t.customDays||g).slice(),q=m.splice(0,h);t.customDays=m.concat(q),t.startDay=+h}else t.startDay=0;return[u,d].forEach(function(e,n){e&&e.split&&(n?t.overlayButton=e:t.overlayPlaceholder=e)}),t}function n(){return{startDate:v(new Date),position:"bl"}}function a(t){var e={};return e[M[t[0]]]=1,"c"===t?e:(e[M[t[1]]]=1,e)}function o(t,e){var n=s(t,e),a=r(t,e),o=i(e);e.calendar.innerHTML=n+a+o}function s(t,e){return'\n      <div class="qs-controls">\n        <div class="qs-arrow qs-left"></div>\n        <div class="qs-month-year">\n          <span class="qs-month">'+e.months[t.getMonth()]+'</span>\n          <span class="qs-year">'+t.getFullYear()+'</span>\n        </div>\n        <div class="qs-arrow qs-right"></div>\n      </div>\n    '}function r(t,e){var n=e.minDate,a=e.maxDate,o=e.dateSelected,s=e.currentYear,r=e.currentMonth,i=e.noWeekends,c=e.days,l=e.disabledDates,u=new Date,d=u.toJSON().slice(0,7)===t.toJSON().slice(0,7),h=new Date(new Date(t).setDate(1)),f=h.getDay()-e.startDay,p=f<0?7:0;h.setMonth(h.getMonth()+1),h.setDate(0);var y=h.getDate(),m=[],q=p+7*((f+y)/7|0);q+=(f+y)%7?7:0,0!==e.startDay&&0===f&&(q+=7);for(var D=1;D<=q;D++){var b=c[(D-1)%7],S=D-(f>=0?f:7+f),g=new Date(s,r,S),w=S<1||S>y,M="",L='<span class="qs-num">'+S+"</span>";if(w)M="qs-empty",L="";else{var N=n&&g<n||a&&g>a||l.includes(+v(g)),x=c[6],Y=c[0],C=b===x||b===Y,P=d&&!N&&S===u.getDate();N=N||i&&C,M=N?"qs-disabled":P?"qs-current":""}+g!=+o||w||(M+=" qs-active"),m.push('<div class="qs-square qs-num '+b+" "+M+'">'+L+"</div>")}var k=c.map(function(t){return'<div class="qs-square qs-day">'+t+"</div>"}).concat(m);if(k.length%7!=0)throw"Calendar not constructed properly. The # of squares should be a multiple of 7.";return k.unshift('<div class="qs-squares">'),k.push("</div>"),k.join("")}function i(t){return'\n      <div class="qs-overlay qs-hidden">\n        <div class="qs-close">&#10005;</div>\n        <input type="number" class="qs-overlay-year" placeholder="'+t.overlayPlaceholder+'" />\n        <div class="qs-submit qs-disabled">'+t.overlayButton+"</div>\n      </div>\n    "}function c(t,e){var n=e.currentMonth,a=e.currentYear,o=e.calendar,s=e.el,r=e.onSelect,i=o.querySelector(".qs-active"),c=t.textContent;e.dateSelected=new Date(a,n,c),i&&i.classList.remove("qs-active"),t.classList.add("qs-active"),l(s,e),m(e),r&&r(e)}function l(t,e){if(!e.nonInput)return e.formatter?e.formatter(t,e.dateSelected):void(t.value=e.dateSelected.toDateString())}function u(t,e,n){n?e.currentYear=n:(e.currentMonth+=t.contains("qs-right")?1:-1,12===e.currentMonth?(e.currentMonth=0,e.currentYear++):-1===e.currentMonth&&(e.currentMonth=11,e.currentYear--)),o(new Date(e.currentYear,e.currentMonth,1),e),e.currentMonthName=e.months[e.currentMonth],e.onMonthChange&&e.onMonthChange(e)}function d(t){if(!t.noPosition){var e=t.el,n=t.calendar,a=t.position,o=t.parent,s=a.top,r=a.right;if(a.centered)return n.classList.add("qs-centered");var i=o.getBoundingClientRect(),c=e.getBoundingClientRect(),l=n.getBoundingClientRect(),u=c.top-i.top+o.scrollTop,d="\n      top:"+(u-(s?l.height:-1*c.height))+"px;\n      left:"+(c.left-i.left+(r?c.width-l.width:0))+"px;\n    ";n.setAttribute("style",d)}}function h(t,e){if(!p(t))throw"`setDate` needs a JavaScript Date object.";t=v(t),this.currentYear=t.getFullYear(),this.currentMonth=t.getMonth(),this.currentMonthName=this.months[t.getMonth()],this.dateSelected=e?void 0:t,!e&&l(this.el,this),o(t,this),e&&(this.el.value="")}function f(){this.setDate(this.startDate,!0)}function p(t){return["[object Date]"==={}.toString.call(t),"Invalid Date"!==t.toString()].every(Boolean)}function v(t){return t?new Date(t.toDateString()):t}function y(){var t=this.calendar,e=this.parent,n=this.el;S.forEach(function(t){window.removeEventListener(t,D)}),t.remove(),t.hasOwnProperty("parentStyle")&&(e.style.position=""),b=b.filter(function(t){return t!==n})}function m(t){t.calendar.classList.add("qs-hidden"),t.onHide&&t.onHide(t)}function q(t){t.calendar.classList.remove("qs-hidden"),d(t),t.onShow&&t.onShow(t)}function D(t){function e(e){var o=e.calendar,s=l.classList,r=o.querySelector(".qs-month-year"),d=s.contains("qs-close");if(s.contains("qs-num")){var h="SPAN"===l.nodeName?l.parentNode:l;!["qs-disabled","qs-active","qs-empty"].some(function(t){return h.classList.contains(t)})&&c(h,e)}else if(s.contains("qs-arrow"))u(s,e);else if(i.includes(r)||d)n(o,d,e);else if(l.classList.contains("qs-submit")){var f=o.querySelector(".qs-overlay-year");a(t,f,e)}}function n(t,e,n){[".qs-overlay",".qs-controls",".qs-squares"].forEach(function(e,n){t.querySelector(e).classList.toggle(n?"qs-blur":"qs-hidden")});var a=t.querySelector(".qs-overlay-year");e?a.value="":a.focus()}function a(t,e,n){var a=isNaN((new Date).setFullYear(e.value||void 0));if(13===t.which||"click"===t.type){if(a||e.classList.contains("qs-disabled"))return;u(null,n,e.value)}else{n.calendar.querySelector(".qs-submit").classList[a?"add":"remove"]("qs-disabled")}}if(!this.isMobile||!this.disableMobile){if(!t.path){for(var o=t.target,s=[];o!==document;)s.push(o),o=o.parentNode;t.path=s}var r=t.type,i=t.path,l=t.target,d=this.calendar,h=this.el,f=d.classList,p=f.contains("qs-hidden"),v=i.includes(d);if("keydown"===r){var y=d.querySelector(".qs-overlay"),D=!y.classList.contains("qs-hidden");if(13===t.which&&D)return t.stopPropagation(),a(t,l,this);if(27===t.which&&D)return n(d,!0,this);if(9!==t.which)return}if("focusin"===r)return l===h&&q(this);this.noPosition?v?e(this):p?q(this):m(this):p?l===h&&q(this):"click"===r&&v?e(this):"input"===r?a(t,l,this):l!==h&&m(this)}}Array.prototype.includes||(Array.prototype.includes=function(t){return this.reduce(function(e,n){return e||n===t},!1)});var b=[],S=["click","focusin","keydown","input"],g=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],w=["January","February","March","April","May","June","July","August","September","October","November","December"],M={t:"top",r:"right",b:"bottom",l:"left",c:"centered"};return t});
 
 /***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1704,7 +1767,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1712,7 +1775,7 @@ module.exports = {
 
 var _payee = _interopRequireDefault(__webpack_require__(3));
 
-var _transaction = _interopRequireDefault(__webpack_require__(10));
+var _transaction = _interopRequireDefault(__webpack_require__(7));
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
@@ -1756,7 +1819,7 @@ function isValidTransaction(transaction) {
 }
 
 const parseOFXfile = function (filename, callback) {
-  const fs = __webpack_require__(11);
+  const fs = __webpack_require__(12);
 
   const path = __webpack_require__(2);
 
@@ -1798,24 +1861,34 @@ module.exports = {
 };
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 
+var _utilities = _interopRequireDefault(__webpack_require__(1));
+
 var _payee = _interopRequireDefault(__webpack_require__(3));
 
-var _category = _interopRequireDefault(__webpack_require__(7));
+var _category = _interopRequireDefault(__webpack_require__(10));
+
+var _transaction = _interopRequireDefault(__webpack_require__(7));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const importQIFfile = function (filename) {
-  const fs = __webpack_require__(11);
+var crypto = __webpack_require__(33);
+
+const importQIFfile = function (filename, callback) {
+  const fs = __webpack_require__(12);
 
   const path = __webpack_require__(2);
 
   const filepath = path.resolve(__dirname, filename);
+  let categoryLookups;
+  buildCategoryLookup(function (data) {
+    categoryLookups = data;
+  });
   fs.readFile(filepath, 'utf-8', (err, data) => {
     if (err) {
       alert("An error ocurred reading the file :" + err.message);
@@ -1859,14 +1932,23 @@ const importQIFfile = function (filename) {
         }
       }
 
-      if (parsedTransaction) {
-        parseTransactionPromises.push(populateTransactionPromise(parsedTransaction));
+      if (parsedTransaction.payee_name) {
+        parsedTransaction.id = _utilities.default.createGuid();
+        const hashString = parsedTransaction.payee_name + parsedTransaction.transaction_date + parsedTransaction.amount;
+        parsedTransaction.reference_code = crypto.createHash('md5').update(hashString).digest("hex");
+        parseTransactionPromises.push(populateTransactionPromise(parsedTransaction, categoryLookups));
       }
     }
 
-    console.dir(parseTransactionPromises);
-    Promise.all(parseTransactionPromises).then(function (transactions) {
-      console.dir(transactions);
+    Promise.all(parseTransactionPromises).then(function (qif_transactions) {
+      let qifTransactionPromises = [];
+
+      for (let i = 0; i < qif_transactions.length; i++) {
+        const qifTransaction = qif_transactions[i];
+        qifTransactionPromises.push(_transaction.default.saveQIFTransactionPromise(qifTransaction));
+      }
+
+      Promise.all(qifTransactionPromises).then(callback());
     });
   });
 };
@@ -1879,31 +1961,41 @@ function parseDate(strDate) {
   return strDate.replace("D", "").replace("'", "/").replace(" ", "");
 }
 
-function populateTransactionPromise(parsedTransaction) {
+function populateTransactionPromise(parsedTransaction, categoryLookups) {
   return new Promise(function (resolve, reject) {
-    _category.default.findOrCreateCategory(parsedTransaction.category_name, function (category) {
+    const payeeCallback = function (payee) {
+      parsedTransaction.payee_id = payee.id;
+      resolve(parsedTransaction);
+    };
+
+    const categoryCallback = function (category) {
       parsedTransaction.category_id = category.id;
 
-      _payee.default.findOrCreatePayee(parsedTransaction.payee_name, category.id, function (payee) {
-        parsedTransaction.payee_id = payee.id;
-        resolve(parsedTransaction);
-      });
-    });
+      _payee.default.findOrCreatePayee(parsedTransaction.payee_name, category.id, payeeCallback);
+    };
+
+    _category.default.findOrCreateCategory(parsedTransaction.category_name, categoryCallback, categoryLookups);
+  });
+}
+
+function buildCategoryLookup(callback) {
+  _category.default.getAllCategories(function (categories) {
+    let categoryLookups = {};
+
+    for (let i = 0; i < categories.length; i++) {
+      const category = categories[i];
+      categoryLookups[category.name] = category;
+    }
+
+    callback(categoryLookups);
   });
 }
 
 /***/ }),
-/* 32 */
-/***/ (function(module, exports, __webpack_require__) {
+/* 33 */
+/***/ (function(module, exports) {
 
-"use strict";
-
-
-module.exports = {
-  categories: {
-    "uncategorized": 'f74a549c-3d46-4efd-95bb-935c642b649b'
-  }
-};
+module.exports = require("crypto");
 
 /***/ })
 /******/ ]);

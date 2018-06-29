@@ -1,10 +1,6 @@
 import repo from "../data/repo";
-import utilities from "../helpers/utilities.js"
-import category from "./category.js"
-import payee from "./payee.js"
 
-
-const get_transactions = function(render_callback) {
+const getTransactions = function (render_callback) {
 
   const sql = `SELECT t.id,
                       p.name as payee,
@@ -21,72 +17,99 @@ const get_transactions = function(render_callback) {
 
   const params = []
 
-  repo.getData(sql, params, function(data){
-        render_callback(data)
-    });
+  repo.getData(sql, params, function (data) {
+    render_callback(data)
+  });
 }
 
-const saveTransaction = function(newTransaction, callback){
-    const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
+const saveTransaction = function (newTransaction, callback) {
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
                   VALUES (?, ?, ?, ?, ?, ?, ?);`
-    const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code]
+  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code]
 
-    repo.executeStatement(sql, params, function(response){
-        callback();
-    });
-  }
+  repo.executeStatement(sql, params, function (error) {
+    callback(error);
+  });
+}
 
 
-const save_ofx_transaction = function(newTransaction, callback){
-    const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
+const saveOFXTransaction = function (newTransaction, callback) {
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
                   SELECT ?, ?, ?, ?, p.default_category_id, ?, ?
                   FROM payees p
                   WHERE p.id = ?;`
 
-    const params = [newTransaction.id,
-                    newTransaction.transaction_date,
-                    newTransaction.payee_id,
-                    newTransaction.memo,
-                    newTransaction.amount,
-                    newTransaction.reference_code,
-                    newTransaction.payee_id]
+  const params = [newTransaction.id,
+  newTransaction.transaction_date,
+  newTransaction.payee_id,
+  newTransaction.memo,
+  newTransaction.amount,
+  newTransaction.reference_code,
+  newTransaction.payee_id]
 
-    repo.executeStatement(sql, params, function(error){
-        callback(error);
-    });
+  repo.executeStatement(sql, params, function (error) {
+    callback(error);
+  });
 }
 
-const saveOFXTransactionPromise = function(transaction){
+const saveQIFTransaction = function (newTransaction, callback) {
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount, reference_code)
+               SELECT ?, ?, ?, ?, ?, ?, ?
+               WHERE NOT EXISTS (SELECT 1 FROM transactions WHERE reference_code = ?);`
+  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code, newTransaction.reference_code]
 
-  return new Promise(function(resolve, reject) {
-                  save_ofx_transaction(transaction, function(error){
-                    if(error){
-                      reject(error)
-                      return
-                    }
-                    resolve()
-                  })
-                });
+  repo.executeStatement(sql, params, function (error) {
+    callback(error);
+  });
+}
+
+const saveOFXTransactionPromise = function (transaction) {
+
+  return new Promise(function (resolve, reject) {
+    saveOFXTransaction(transaction, function (error) {
+      if (error) {
+        reject(error)
+        return
+      }
+      resolve()
+    })
+  });
+}
+
+const saveQIFTransactionPromise = function (transaction) {
+
+  return new Promise(function (resolve, reject) {
+    saveQIFTransaction(transaction, function (error) {
+      if (error) {
+        reject(error)
+        return
+      }
+      resolve()
+    })
+  });
 
 }
 
-const getTransactionByReferenceCode = function(reference_code, callback){
+const getTransactionByReferenceCode = function (reference_code, callback) {
 
-      const sql = `SELECT * FROM transactions WHERE reference_code = ?`
+  const sql = `SELECT * FROM transactions WHERE reference_code = ?`
 
-      const params = [reference_code]
+  const params = [reference_code]
 
-      repo.getRow(sql, params, function(payee, error){
-          callback(payee, error)
-      })
+  repo.getRow(sql, params, function (payee, error) {
+    callback(payee, error)
+  })
 }
 
 module.exports = {
-  get_transactions: get_transactions,
-  save_transaction: saveTransaction,
-  save_ofx_transaction: save_ofx_transaction,
+  getTransactions: getTransactions,
+  getTransactionByReferenceCode: getTransactionByReferenceCode,
+  saveTransaction: saveTransaction,
+  saveOFXTransaction: saveOFXTransaction,
+  saveQIFTransaction: saveQIFTransaction,
   saveOFXTransactionPromise: saveOFXTransactionPromise,
-  getTransactionByReferenceCode: getTransactionByReferenceCode
+  saveQIFTransactionPromise: saveQIFTransactionPromise
+
 }
 
 /**** PRIVATE FUNCTIONS ****/
