@@ -87,6 +87,7 @@ function parseDate(strDate) {
 
 function populateTransactionPromise(parsedTransaction, categoryLookups) {
 
+    //TODO: handle errors
     return new Promise(function (resolve, reject) {
 
         const payeeCallback = function (payee) {

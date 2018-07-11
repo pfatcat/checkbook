@@ -8,33 +8,48 @@ module.exports = {
   getData: function (sql, params, callback){
     const db = new Database(dbPath);
 
-    let records = [];
-
-    var stmt = db.prepare(sql);
-    const rows = stmt.all(params);
-    callback(rows)
-
-    db.close();
+    try{
+      const stmt = db.prepare(sql);
+      const rows = stmt.all(params);
+      callback(rows)
+    }
+    catch(err){
+      handleError(err)
+    }
+    finally{
+      db.close();
+    }
   },
 
   getRow: function (sql, params, callback){
     const db = new Database(dbPath);
 
-    var stmt = db.prepare(sql);
-    const row = stmt.get(params);
-    callback(row)
-
-    db.close();
+    try{
+      const stmt = db.prepare(sql);
+      const row = stmt.get(params);
+      callback(row)
+    }
+    catch(err){
+      handleError(err)
+    }
+    finally{
+      db.close();
+    }
   },
 
   executeStatement: function(sql, params, callback){
     const db = new Database(dbPath);
 
-    var stmt = db.prepare(sql);
-    const response = stmt.run(params);
-    callback()
-
-    db.close();
+    try{ 
+      const stmt = db.prepare(sql);
+      stmt.run(params);
+    }
+    catch(err){
+      handleError(err)
+    }
+    finally{
+      db.close();
+    }
   }
 }
 

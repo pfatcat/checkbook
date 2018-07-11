@@ -169,7 +169,7 @@ const newPayee = function () {
 }
 
 const importQIF = function () {
-  const filename = '../src/data/samples/sample.qif'
+  const filename = '../src/data/samples/2018.qif'
   qifImporter_service.importQIFfile(filename, function () {
     loadTransactions()
   })

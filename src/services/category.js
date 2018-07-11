@@ -51,7 +51,11 @@ const createCategory = function (category, callback) {
 const findOrCreateCategory = function (categoryName, callback, categoryLookups) {
 
   if (!categoryName || categoryName == "") {
-    return enums.categories.uncategorized
+    const uncategorized = {
+      id: enums.categories.uncategorized,
+      name: "Uncategorized"
+    }
+    return callback(uncategorized)
   }
 
   const fetchedCategory = categoryLookups && categoryLookups[categoryName]

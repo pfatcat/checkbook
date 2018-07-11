@@ -281,25 +281,41 @@ const dbPath = path.resolve(__dirname, '../src/data/checkbook.db');
 module.exports = {
   getData: function (sql, params, callback) {
     const db = new Database(dbPath);
-    let records = [];
-    var stmt = db.prepare(sql);
-    const rows = stmt.all(params);
-    callback(rows);
-    db.close();
+
+    try {
+      const stmt = db.prepare(sql);
+      const rows = stmt.all(params);
+      callback(rows);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      db.close();
+    }
   },
   getRow: function (sql, params, callback) {
     const db = new Database(dbPath);
-    var stmt = db.prepare(sql);
-    const row = stmt.get(params);
-    callback(row);
-    db.close();
+
+    try {
+      const stmt = db.prepare(sql);
+      const row = stmt.get(params);
+      callback(row);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      db.close();
+    }
   },
   executeStatement: function (sql, params, callback) {
     const db = new Database(dbPath);
-    var stmt = db.prepare(sql);
-    const response = stmt.run(params);
-    callback();
-    db.close();
+
+    try {
+      const stmt = db.prepare(sql);
+      stmt.run(params);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      db.close();
+    }
   }
 };
 
@@ -948,7 +964,11 @@ const createCategory = function (category, callback) {
 
 const findOrCreateCategory = function (categoryName, callback, categoryLookups) {
   if (!categoryName || categoryName == "") {
-    return _enums.default.categories.uncategorized;
+    const uncategorized = {
+      id: _enums.default.categories.uncategorized,
+      name: "Uncategorized"
+    };
+    return callback(uncategorized);
   }
 
   const fetchedCategory = categoryLookups && categoryLookups[categoryName];
@@ -1556,7 +1576,7 @@ const newPayee = function () {
 };
 
 const importQIF = function () {
-  const filename = '../src/data/samples/sample.qif';
+  const filename = '../src/data/samples/2018.qif';
 
   _qif_importer.default.importQIFfile(filename, function () {
     loadTransactions();
@@ -1964,6 +1984,7 @@ function parseDate(strDate) {
 }
 
 function populateTransactionPromise(parsedTransaction, categoryLookups) {
+  //TODO: handle errors
   return new Promise(function (resolve, reject) {
     const payeeCallback = function (payee) {
       parsedTransaction.payee_id = payee.id;
