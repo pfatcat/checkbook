@@ -76,15 +76,8 @@ module.exports = require("electron");
 "use strict";
 
 
-//add to the date prototype...sneaky
-// Date.prototype.toISODate = function() {
-//   var mm = this.getMonth() + 1; // getMonth() is zero-based
-//   var dd = this.getDate();
-//   return [this.getFullYear(),
-//           (mm>9 ? '' : '0') + mm,
-//           (dd>9 ? '' : '0') + dd
-//          ].join('');
-// };
+const crypto = __webpack_require__(28);
+
 module.exports = {
   createGuid: function () {
     function s4() {
@@ -117,6 +110,10 @@ module.exports = {
   },
   nullToSpace: function (value) {
     return value == null ? "" : value;
+  },
+  buildReferenceCode: function (transaction) {
+    const hashString = transaction.payee_name + transaction.transaction_date + transaction.amount;
+    return crypto.createHash('md5').update(hashString).digest("hex");
   }
 };
 
@@ -180,7 +177,7 @@ const findPayeeId = function (payeeName, callback) {
 };
 
 const getAllPayees = function (callback) {
-  const sql = `SELECT * FROM payees`;
+  const sql = `SELECT * FROM payees ORDER BY name`;
   const params = [];
 
   _repo.default.getData(sql, params, function (payees, error) {
@@ -273,7 +270,7 @@ module.exports = {
 "use strict";
 
 
-const Database = __webpack_require__(28);
+const Database = __webpack_require__(29);
 
 const path = __webpack_require__(2);
 
@@ -287,7 +284,7 @@ module.exports = {
       const rows = stmt.all(params);
       callback(rows);
     } catch (err) {
-      handleError(err);
+      handleError(err, sql, params);
     } finally {
       db.close();
     }
@@ -300,7 +297,7 @@ module.exports = {
       const row = stmt.get(params);
       callback(row);
     } catch (err) {
-      handleError(err);
+      handleError(err, sql, params);
     } finally {
       db.close();
     }
@@ -311,16 +308,20 @@ module.exports = {
     try {
       const stmt = db.prepare(sql);
       stmt.run(params);
+      callback();
     } catch (err) {
-      handleError(err);
+      handleError(err, sql, params);
+      callback(err);
     } finally {
       db.close();
     }
   }
 };
 
-function handleError(err) {
+function handleError(err, sql, params) {
   if (err) {
+    err.sql = sql;
+    err.params = params;
     console.log(err);
     return true;
   }
@@ -932,7 +933,7 @@ const getCategoryByName = function (category_name, callback) {
 };
 
 const getAllCategories = function (callback) {
-  const sql = `SELECT * FROM categories`;
+  const sql = `SELECT * FROM categories ORDER BY name`;
   const params = [];
 
   _repo.default.getData(sql, params, function (categories, error) {
@@ -1406,41 +1407,21 @@ var _transaction = _interopRequireDefault(__webpack_require__(7));
 
 var _category = _interopRequireDefault(__webpack_require__(10));
 
-var _datepicker = _interopRequireDefault(__webpack_require__(29));
+var _datepicker = _interopRequireDefault(__webpack_require__(30));
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
 var _payee = _interopRequireDefault(__webpack_require__(3));
 
-var _payee_lookup = _interopRequireDefault(__webpack_require__(30));
+var _payee_lookup = _interopRequireDefault(__webpack_require__(31));
 
-var _ofx_importer = _interopRequireDefault(__webpack_require__(31));
+var _ofx_importer = _interopRequireDefault(__webpack_require__(32));
 
-var _qif_importer = _interopRequireDefault(__webpack_require__(32));
+var _qif_importer = _interopRequireDefault(__webpack_require__(33));
 
 var _enums = _interopRequireDefault(__webpack_require__(11));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-function findOrCreatePayeeId(payeeName, callback) {
-  _payee.default.findPayeeId(payeeName, function (payee_id) {
-    if (!payee_id) {
-      const payee = {
-        id: _utilities.default.createGuid(),
-        name: payeeName,
-        defaultCategoryId: _enums.default.categories.uncategorized
-      };
-
-      _payee.default.createPayee(payee, function (err) {
-        //TODO: handle errors
-        callback(payee.id);
-        return;
-      });
-    }
-
-    callback(payee_id);
-  });
-}
 
 const saveTransaction = function () {
   const ddlCategory = document.getElementById("ddlCategory");
@@ -1449,7 +1430,8 @@ const saveTransaction = function () {
   const transactionDate = _utilities.default.toISODate(new Date(document.querySelector("#txt_date").value));
 
   const payeeName = document.querySelector("#txt_payee").value;
-  findOrCreatePayeeId(payeeName, function (payee_id) {
+
+  _payee.default.findOrCreatePayeeId(payeeName, category_id, function (payee_id) {
     const newTransaction = {
       "id": _utilities.default.createGuid(),
       "transaction_date": transactionDate,
@@ -1458,6 +1440,7 @@ const saveTransaction = function () {
       "memo": document.querySelector("#txt_memo").value,
       "amount": document.querySelector("#txt_amount").value
     };
+    newTransaction.reference_code = _utilities.default.buildReferenceCode(newTransaction);
 
     _transaction.default.saveTransaction(newTransaction, function (response) {
       loadTransactions();
@@ -1548,7 +1531,9 @@ const saveOFXTransactions = function () {
   }
 
   if (transactionsToCreate) {
-    //save OFX transactions
+    console.log("CREATING TRANSACTIONS");
+    console.dir(payeePromises); //save OFX transactions
+
     Promise.all(payeePromises).then(function (resolve) {
       var ofx_transaction_promises = [];
 
@@ -1561,6 +1546,7 @@ const saveOFXTransactions = function () {
         ofx_transaction_promises.push(promise);
       }
 
+      console.dir(ofx_transaction_promises);
       Promise.all(ofx_transaction_promises).then(function (resolve) {
         loadTransactions();
         closeMappingWindow();
@@ -1751,17 +1737,23 @@ module.exports = {
 /* 28 */
 /***/ (function(module, exports) {
 
-module.exports = require("better-sqlite3");
+module.exports = require("crypto");
 
 /***/ }),
 /* 29 */
+/***/ (function(module, exports) {
+
+module.exports = require("better-sqlite3");
+
+/***/ }),
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;!function(t,e){var n="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t};"object"===( false?"undefined":n(exports))?module.exports=e(): true?!(__WEBPACK_AMD_DEFINE_RESULT__ = (function(){return e()}).call(exports, __webpack_require__, exports, module),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)):t.datepicker=e()}(this,function(){"use strict";function t(t,a){var s=t.split?document.querySelector(t):t;a=e(a||n(),s,t);var r=s.parentElement,i=document.createElement("div"),c=a,u=c.startDate,d=c.dateSelected,p=s===document.body||s===document.querySelector("html"),v={el:s,parent:r,nonInput:"INPUT"!==s.nodeName,noPosition:p,position:!p&&a.position,startDate:u,dateSelected:d,disabledDates:a.disabledDates,minDate:a.minDate,maxDate:a.maxDate,noWeekends:!!a.noWeekends,calendar:i,currentMonth:(u||d).getMonth(),currentMonthName:(a.months||w)[(u||d).getMonth()],currentYear:(u||d).getFullYear(),setDate:h,reset:f,remove:y,onSelect:a.onSelect,onShow:a.onShow,onHide:a.onHide,onMonthChange:a.onMonthChange,formatter:a.formatter,months:a.months||w,days:a.customDays||g,startDay:a.startDay,overlayPlaceholder:a.overlayPlaceholder||"4-digit year",overlayButton:a.overlayButton||"Submit",disableMobile:a.disableMobile,isMobile:"ontouchstart"in window};return d&&l(s,v),i.classList.add("qs-datepicker"),i.classList.add("qs-hidden"),b.push(s),o(u||d,v),S.forEach(function(t){window.addEventListener(t,D.bind(v))}),"static"===getComputedStyle(r).position&&(r.style.position="relative"),r.appendChild(i),v}function e(t,e){if(b.includes(e))throw"A datepicker already exists on that element.";var n=t.position,o=t.maxDate,s=t.minDate,r=t.dateSelected,i=t.formatter,c=t.customMonths,l=t.customDays,u=t.overlayPlaceholder,d=t.overlayButton,h=t.startDay,f=t.disabledDates,y=+v(r);if(t.disabledDates=(f||[]).map(function(t){if(!p(t))throw'You supplied an invalid date to "options.disabledDates".';if(+v(t)===y)throw'"disabledDates" cannot contain the same date as "dateSelected".';return+v(t)}),n){if(!["tr","tl","br","bl","c"].some(function(t){return n===t}))throw'"options.position" must be one of the following: tl, tr, bl, br, or c.';t.position=a(n)}else t.position=a("bl");if(["startDate","dateSelected","minDate","maxDate"].forEach(function(e){if(t[e]){if(!p(t[e])||isNaN(+t[e]))throw'"options.'+e+'" needs to be a valid JavaScript Date object.';t[e]=v(t[e])}}),t.startDate=v(t.startDate||t.dateSelected||new Date),t.formatter="function"==typeof i?i:null,o<s)throw'"maxDate" in options is less than "minDate".';if(r){if(s>r)throw'"dateSelected" in options is less than "minDate".';if(o<r)throw'"dateSelected" in options is greater than "maxDate".'}if(["onSelect","onShow","onHide","onMonthChange"].forEach(function(e){t[e]="function"==typeof t[e]&&t[e]}),[c,l].forEach(function(e,n){if(e){var a=['"customMonths" must be an array with 12 strings.','"customDays" must be an array with 7 strings.'];if("[object Array]"!=={}.toString.call(e)||e.length!==(n?7:12))throw a[n];t[n?"days":"months"]=e}}),void 0!==h&&+h&&+h>0&&+h<7){var m=(t.customDays||g).slice(),q=m.splice(0,h);t.customDays=m.concat(q),t.startDay=+h}else t.startDay=0;return[u,d].forEach(function(e,n){e&&e.split&&(n?t.overlayButton=e:t.overlayPlaceholder=e)}),t}function n(){return{startDate:v(new Date),position:"bl"}}function a(t){var e={};return e[M[t[0]]]=1,"c"===t?e:(e[M[t[1]]]=1,e)}function o(t,e){var n=s(t,e),a=r(t,e),o=i(e);e.calendar.innerHTML=n+a+o}function s(t,e){return'\n      <div class="qs-controls">\n        <div class="qs-arrow qs-left"></div>\n        <div class="qs-month-year">\n          <span class="qs-month">'+e.months[t.getMonth()]+'</span>\n          <span class="qs-year">'+t.getFullYear()+'</span>\n        </div>\n        <div class="qs-arrow qs-right"></div>\n      </div>\n    '}function r(t,e){var n=e.minDate,a=e.maxDate,o=e.dateSelected,s=e.currentYear,r=e.currentMonth,i=e.noWeekends,c=e.days,l=e.disabledDates,u=new Date,d=u.toJSON().slice(0,7)===t.toJSON().slice(0,7),h=new Date(new Date(t).setDate(1)),f=h.getDay()-e.startDay,p=f<0?7:0;h.setMonth(h.getMonth()+1),h.setDate(0);var y=h.getDate(),m=[],q=p+7*((f+y)/7|0);q+=(f+y)%7?7:0,0!==e.startDay&&0===f&&(q+=7);for(var D=1;D<=q;D++){var b=c[(D-1)%7],S=D-(f>=0?f:7+f),g=new Date(s,r,S),w=S<1||S>y,M="",L='<span class="qs-num">'+S+"</span>";if(w)M="qs-empty",L="";else{var N=n&&g<n||a&&g>a||l.includes(+v(g)),x=c[6],Y=c[0],C=b===x||b===Y,P=d&&!N&&S===u.getDate();N=N||i&&C,M=N?"qs-disabled":P?"qs-current":""}+g!=+o||w||(M+=" qs-active"),m.push('<div class="qs-square qs-num '+b+" "+M+'">'+L+"</div>")}var k=c.map(function(t){return'<div class="qs-square qs-day">'+t+"</div>"}).concat(m);if(k.length%7!=0)throw"Calendar not constructed properly. The # of squares should be a multiple of 7.";return k.unshift('<div class="qs-squares">'),k.push("</div>"),k.join("")}function i(t){return'\n      <div class="qs-overlay qs-hidden">\n        <div class="qs-close">&#10005;</div>\n        <input type="number" class="qs-overlay-year" placeholder="'+t.overlayPlaceholder+'" />\n        <div class="qs-submit qs-disabled">'+t.overlayButton+"</div>\n      </div>\n    "}function c(t,e){var n=e.currentMonth,a=e.currentYear,o=e.calendar,s=e.el,r=e.onSelect,i=o.querySelector(".qs-active"),c=t.textContent;e.dateSelected=new Date(a,n,c),i&&i.classList.remove("qs-active"),t.classList.add("qs-active"),l(s,e),m(e),r&&r(e)}function l(t,e){if(!e.nonInput)return e.formatter?e.formatter(t,e.dateSelected):void(t.value=e.dateSelected.toDateString())}function u(t,e,n){n?e.currentYear=n:(e.currentMonth+=t.contains("qs-right")?1:-1,12===e.currentMonth?(e.currentMonth=0,e.currentYear++):-1===e.currentMonth&&(e.currentMonth=11,e.currentYear--)),o(new Date(e.currentYear,e.currentMonth,1),e),e.currentMonthName=e.months[e.currentMonth],e.onMonthChange&&e.onMonthChange(e)}function d(t){if(!t.noPosition){var e=t.el,n=t.calendar,a=t.position,o=t.parent,s=a.top,r=a.right;if(a.centered)return n.classList.add("qs-centered");var i=o.getBoundingClientRect(),c=e.getBoundingClientRect(),l=n.getBoundingClientRect(),u=c.top-i.top+o.scrollTop,d="\n      top:"+(u-(s?l.height:-1*c.height))+"px;\n      left:"+(c.left-i.left+(r?c.width-l.width:0))+"px;\n    ";n.setAttribute("style",d)}}function h(t,e){if(!p(t))throw"`setDate` needs a JavaScript Date object.";t=v(t),this.currentYear=t.getFullYear(),this.currentMonth=t.getMonth(),this.currentMonthName=this.months[t.getMonth()],this.dateSelected=e?void 0:t,!e&&l(this.el,this),o(t,this),e&&(this.el.value="")}function f(){this.setDate(this.startDate,!0)}function p(t){return["[object Date]"==={}.toString.call(t),"Invalid Date"!==t.toString()].every(Boolean)}function v(t){return t?new Date(t.toDateString()):t}function y(){var t=this.calendar,e=this.parent,n=this.el;S.forEach(function(t){window.removeEventListener(t,D)}),t.remove(),t.hasOwnProperty("parentStyle")&&(e.style.position=""),b=b.filter(function(t){return t!==n})}function m(t){t.calendar.classList.add("qs-hidden"),t.onHide&&t.onHide(t)}function q(t){t.calendar.classList.remove("qs-hidden"),d(t),t.onShow&&t.onShow(t)}function D(t){function e(e){var o=e.calendar,s=l.classList,r=o.querySelector(".qs-month-year"),d=s.contains("qs-close");if(s.contains("qs-num")){var h="SPAN"===l.nodeName?l.parentNode:l;!["qs-disabled","qs-active","qs-empty"].some(function(t){return h.classList.contains(t)})&&c(h,e)}else if(s.contains("qs-arrow"))u(s,e);else if(i.includes(r)||d)n(o,d,e);else if(l.classList.contains("qs-submit")){var f=o.querySelector(".qs-overlay-year");a(t,f,e)}}function n(t,e,n){[".qs-overlay",".qs-controls",".qs-squares"].forEach(function(e,n){t.querySelector(e).classList.toggle(n?"qs-blur":"qs-hidden")});var a=t.querySelector(".qs-overlay-year");e?a.value="":a.focus()}function a(t,e,n){var a=isNaN((new Date).setFullYear(e.value||void 0));if(13===t.which||"click"===t.type){if(a||e.classList.contains("qs-disabled"))return;u(null,n,e.value)}else{n.calendar.querySelector(".qs-submit").classList[a?"add":"remove"]("qs-disabled")}}if(!this.isMobile||!this.disableMobile){if(!t.path){for(var o=t.target,s=[];o!==document;)s.push(o),o=o.parentNode;t.path=s}var r=t.type,i=t.path,l=t.target,d=this.calendar,h=this.el,f=d.classList,p=f.contains("qs-hidden"),v=i.includes(d);if("keydown"===r){var y=d.querySelector(".qs-overlay"),D=!y.classList.contains("qs-hidden");if(13===t.which&&D)return t.stopPropagation(),a(t,l,this);if(27===t.which&&D)return n(d,!0,this);if(9!==t.which)return}if("focusin"===r)return l===h&&q(this);this.noPosition?v?e(this):p?q(this):m(this):p?l===h&&q(this):"click"===r&&v?e(this):"input"===r?a(t,l,this):l!==h&&m(this)}}Array.prototype.includes||(Array.prototype.includes=function(t){return this.reduce(function(e,n){return e||n===t},!1)});var b=[],S=["click","focusin","keydown","input"],g=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],w=["January","February","March","April","May","June","July","August","September","October","November","December"],M={t:"top",r:"right",b:"bottom",l:"left",c:"centered"};return t});
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1789,7 +1781,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 31 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1818,9 +1810,10 @@ function parseTransaction(strTransaction) {
     transaction_type: getElement(strTransaction, "TRNTYPE").trim(),
     transaction_date: transaction_date.trim(),
     amount: getElement(strTransaction, "TRNAMT").trim(),
-    payee: getElement(strTransaction, "NAME").trim(),
-    reference_code: getElement(strTransaction, "REFNUM").trim()
+    payee: getElement(strTransaction, "NAME").trim()
   };
+  const ofx_code = getElement(strTransaction, "REFNUM").trim();
+  transaction.reference_code = ofx_code != "" ? ofx_code : _utilities.default.buildReferenceCode(transaction);
   return transaction;
 }
 
@@ -1883,7 +1876,7 @@ module.exports = {
 };
 
 /***/ }),
-/* 32 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1898,8 +1891,6 @@ var _category = _interopRequireDefault(__webpack_require__(10));
 var _transaction = _interopRequireDefault(__webpack_require__(7));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var crypto = __webpack_require__(33);
 
 const importQIFfile = function (filename, callback) {
   const fs = __webpack_require__(12);
@@ -1956,8 +1947,7 @@ const importQIFfile = function (filename, callback) {
 
       if (parsedTransaction.payee_name) {
         parsedTransaction.id = _utilities.default.createGuid();
-        const hashString = parsedTransaction.payee_name + parsedTransaction.transaction_date + parsedTransaction.amount;
-        parsedTransaction.reference_code = crypto.createHash('md5').update(hashString).digest("hex");
+        parsedTransaction.reference_code = _utilities.default.buildReferenceCode(parsedTransaction);
         parseTransactionPromises.push(populateTransactionPromise(parsedTransaction, categoryLookups));
       }
     }
@@ -2013,12 +2003,6 @@ function buildCategoryLookup(callback) {
     callback(categoryLookups);
   });
 }
-
-/***/ }),
-/* 33 */
-/***/ (function(module, exports) {
-
-module.exports = require("crypto");
 
 /***/ })
 /******/ ]);

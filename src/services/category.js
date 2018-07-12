@@ -16,7 +16,7 @@ const getCategoryByName = function (category_name, callback) {
 }
 
 const getAllCategories = function (callback) {
-  const sql = `SELECT * FROM categories`
+  const sql = `SELECT * FROM categories ORDER BY name`
 
   const params = []
 

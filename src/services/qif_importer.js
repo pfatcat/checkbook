@@ -2,7 +2,6 @@ import utilities from "../helpers/utilities.js";
 import payee_service from "../services/payee.js"
 import category_service from "../services/category.js"
 import transaction_service from "../services/transaction.js"
-var crypto = require('crypto');
 
 const importQIFfile = function (filename, callback) {
 
@@ -58,8 +57,7 @@ const importQIFfile = function (filename, callback) {
 
             if (parsedTransaction.payee_name) {
                 parsedTransaction.id = utilities.createGuid()
-                const hashString = parsedTransaction.payee_name + parsedTransaction.transaction_date + parsedTransaction.amount
-                parsedTransaction.reference_code = crypto.createHash('md5').update(hashString).digest("hex");
+                parsedTransaction.reference_code = utilities.buildReferenceCode(parsedTransaction)
                 parseTransactionPromises.push(populateTransactionPromise(parsedTransaction, categoryLookups))
             }
         }

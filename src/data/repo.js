@@ -14,7 +14,7 @@ module.exports = {
       callback(rows)
     }
     catch(err){
-      handleError(err)
+      handleError(err, sql, params)
     }
     finally{
       db.close();
@@ -30,7 +30,7 @@ module.exports = {
       callback(row)
     }
     catch(err){
-      handleError(err)
+      handleError(err, sql, params)
     }
     finally{
       db.close();
@@ -43,9 +43,11 @@ module.exports = {
     try{ 
       const stmt = db.prepare(sql);
       stmt.run(params);
+      callback()
     }
     catch(err){
-      handleError(err)
+      handleError(err, sql, params)
+      callback(err)
     }
     finally{
       db.close();
@@ -53,9 +55,11 @@ module.exports = {
   }
 }
 
-function handleError(err){
+function handleError(err, sql, params){
 
   if(err){
+      err.sql = sql
+      err.params = params
       console.log(err)
       return true
   }

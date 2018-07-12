@@ -1,14 +1,4 @@
-
-//add to the date prototype...sneaky
-// Date.prototype.toISODate = function() {
-//   var mm = this.getMonth() + 1; // getMonth() is zero-based
-//   var dd = this.getDate();
-
-//   return [this.getFullYear(),
-//           (mm>9 ? '' : '0') + mm,
-//           (dd>9 ? '' : '0') + dd
-//          ].join('');
-// };
+const crypto = require('crypto');
 
 module.exports = {
   createGuid: function (){
@@ -46,6 +36,10 @@ module.exports = {
   },
   nullToSpace: function(value){
     return value == null ? "" : value
-  }
+  },
+  buildReferenceCode: function(transaction){
+    const hashString = transaction.payee_name + transaction.transaction_date + transaction.amount
+    return crypto.createHash('md5').update(hashString).digest("hex");
+  } 
 }
 

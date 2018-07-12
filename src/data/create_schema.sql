@@ -46,6 +46,8 @@ FOREIGN KEY(payee_id) REFERENCES payees(id),
 FOREIGN KEY(category_id) REFERENCES categories(id)
 );
 
+COMMIT;
+
 
 
 

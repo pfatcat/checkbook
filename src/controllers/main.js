@@ -9,22 +9,6 @@ import ofxImporter_service from "../services/ofx_importer.js"
 import qifImporter_service from "../services/qif_importer.js"
 import enums from "../helpers/enums.js"
 
-
-function findOrCreatePayeeId(payeeName, callback) {
-  payee_service.findPayeeId(payeeName, function (payee_id) {
-    if (!payee_id) {
-      const payee = { id: utilities.createGuid(), name: payeeName, defaultCategoryId: enums.categories.uncategorized }
-      payee_service.createPayee(payee, function (err) {
-        //TODO: handle errors
-        callback(payee.id)
-        return
-      })
-    }
-
-    callback(payee_id)
-  })
-}
-
 const saveTransaction = function () {
 
   const ddlCategory = document.getElementById("ddlCategory");
@@ -34,7 +18,7 @@ const saveTransaction = function () {
 
   const payeeName = document.querySelector("#txt_payee").value
 
-  findOrCreatePayeeId(payeeName, function (payee_id) {
+  payee_service.findOrCreatePayeeId(payeeName, category_id, function (payee_id) {
 
     const newTransaction = {
       "id": utilities.createGuid(),
@@ -44,6 +28,8 @@ const saveTransaction = function () {
       "memo": document.querySelector("#txt_memo").value,
       "amount": document.querySelector("#txt_amount").value
     }
+
+    newTransaction.reference_code = utilities.buildReferenceCode(newTransaction)
 
     transaction_service.saveTransaction(newTransaction, function (response) {
       loadTransactions()
@@ -140,6 +126,7 @@ const saveOFXTransactions = function () {
   }
 
   if (transactionsToCreate) {
+
     //save OFX transactions
     Promise.all(payeePromises).then(function (resolve) {
 

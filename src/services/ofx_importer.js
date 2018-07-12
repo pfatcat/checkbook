@@ -18,8 +18,11 @@ function parseTransaction(strTransaction){
     transaction_date: transaction_date.trim(),
     amount: getElement(strTransaction, "TRNAMT").trim(),
     payee: getElement(strTransaction, "NAME").trim(),
-    reference_code: getElement(strTransaction, "REFNUM").trim()
   }
+
+  const ofx_code = getElement(strTransaction, "REFNUM").trim()
+
+  transaction.reference_code = ofx_code != "" ? ofx_code : utilities.buildReferenceCode(transaction)
 
   return transaction
 }
@@ -65,7 +68,6 @@ const parseOFXfile = function(filename, callback){
           let newTransaction = parseTransaction(ofx_transactions[i])
 
           if(isValidTransaction(newTransaction)){
-
             const promise = new Promise(function(resolve, reject) {
               payee.findPayeeId(newTransaction.payee, function(payeeId){
                 newTransaction.payee_id = payeeId

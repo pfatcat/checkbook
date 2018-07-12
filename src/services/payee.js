@@ -48,7 +48,7 @@ const findPayeeId = function (payeeName, callback){
 
 const getAllPayees = function (callback){
 
-  const sql = `SELECT * FROM payees`
+  const sql = `SELECT * FROM payees ORDER BY name`
 
   const params = []
 
