@@ -2,18 +2,18 @@ import repo from "../data/repo";
 import utilities from "../helpers/utilities.js";
 
 
-const getPayeeByName = function (payee_name, callback){
+const getPayeeByName = function (payee_name, callback) {
 
   const sql = "SELECT * FROM payees WHERE name = ?"
 
   const params = [payee_name.trim()]
 
-  repo.getRow(sql, params, function(payee, error){
-        callback(payee, error)
-      })
+  repo.getRow(sql, params, function (payee, error) {
+    callback(payee, error)
+  })
 }
 
-const getPayeeByReferenceName = function (reference_name, callback){
+const getPayeeByReferenceName = function (reference_name, callback) {
 
   const sql = `SELECT p.*
                 FROM payee_lookup pl
@@ -23,55 +23,55 @@ const getPayeeByReferenceName = function (reference_name, callback){
 
   const params = [reference_name]
 
-  repo.getRow(sql, params, function(payee, error){
-      callback(payee, error)
-      })
-}
-
-const findPayeeId = function (payeeName, callback){
-
-  getPayeeByName(payeeName, function(payee, error){
-
-      if(payee){
-        callback(payee.id, error)
-        return
-      }
-      getPayeeByReferenceName(payeeName, function(payee){
-          if(payee){
-            callback(payee.id, error)
-            return
-          }
-          callback(null)
-      })
+  repo.getRow(sql, params, function (payee, error) {
+    callback(payee, error)
   })
 }
 
-const getAllPayees = function (callback){
+const findPayeeId = function (payeeName, callback) {
+
+  getPayeeByName(payeeName, function (payee, error) {
+
+    if (payee) {
+      callback(payee.id, error)
+      return
+    }
+    getPayeeByReferenceName(payeeName, function (payee) {
+      if (payee) {
+        callback(payee.id, error)
+        return
+      }
+      callback(null)
+    })
+  })
+}
+
+const getAllPayees = function (callback) {
 
   const sql = `SELECT * FROM payees ORDER BY name`
 
   const params = []
 
-  repo.getData(sql, params, function(payees, error){
-        callback(payees, error)
-    });
+  repo.getData(sql, params, function (payees, error) {
+    callback(payees, error)
+  });
 }
 
-const createPayee = function(payee, callback){
+const createPayee = function (payee, callback) {
 
-    const sql = `INSERT INTO payees(id, name, default_category_id) VALUES(?,?,?)`
+  const sql = `INSERT INTO payees(id, name, default_category_id) VALUES(?,?,?)`
 
-    const params = [payee.id, payee.name, payee.defaultCategoryId]
+  const params = [payee.id, payee.name, payee.defaultCategoryId]
 
-    repo.executeStatement(sql, params, function(error){
-        callback(error);
-    });
+  repo.executeStatement(sql, params, function (error) {
+    callback(error);
+  });
 }
 
-const createPayeePromise = function(payee){
-  const createPayeePromise = new Promise(function(resolve, reject) {
-    createPayee(payee, function(error){
-      if(error){
+const createPayeePromise = function (payee) {
+  const createPayeePromise = new Promise(function (resolve, reject) {
+    createPayee(payee, function (error) {
+      if (error) {
         console.error(error)
         reject(error)
         return
@@ -84,9 +84,9 @@ const createPayeePromise = function(payee){
 }
 
 
-const findOrCreatePayee = function(payeeName, default_category_id, callback){
-  getPayeeByName(payeeName, function(payee){
-    if(payee){
+const findOrCreatePayee = function (payeeName, default_category_id, callback) {
+  getPayeeByName(payeeName, function (payee) {
+    if (payee) {
       return callback(payee)
     }
     const newPayee = {
@@ -94,8 +94,8 @@ const findOrCreatePayee = function(payeeName, default_category_id, callback){
       name: payeeName,
       default_category_id: default_category_id
     }
-    createPayee(newPayee, function(error){
-      if(error){
+    createPayee(newPayee, function (error) {
+      if (error) {
         console.error(error)
       }
     })
@@ -105,18 +105,18 @@ const findOrCreatePayee = function(payeeName, default_category_id, callback){
   })
 }
 
-const findOrCreatePayeePromise = function(payeeName, default_category_id){
-  return new Promise(function(resolve, reject) {
-    findOrCreatePayee(payeeName, default_category_id, function(payee){
+const findOrCreatePayeePromise = function (payeeName, default_category_id) {
+  return new Promise(function (resolve, reject) {
+    findOrCreatePayee(payeeName, default_category_id, function (payee) {
       resolve(payee)
     })
   })
 }
 
-const getAllPayeesPromise = function(){
-  return new Promise(function(resolve, reject) {
-    getAllPayees(function(payees,error){
-      if(error){
+const getAllPayeesPromise = function () {
+  return new Promise(function (resolve, reject) {
+    getAllPayees(function (payees, error) {
+      if (error) {
         reject(error)
         return
       }

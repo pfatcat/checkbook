@@ -78,19 +78,19 @@ module.exports = require("path");
 
 /***/ }),
 /* 3 */,
-/* 4 */,
-/* 5 */
+/* 4 */
 /***/ (function(module, exports) {
 
 module.exports = require("fs-jetpack");
 
 /***/ }),
-/* 6 */
+/* 5 */
 /***/ (function(module, exports) {
 
 module.exports = {"name":"development","description":"Add here any environment specific stuff you like."}
 
 /***/ }),
+/* 6 */,
 /* 7 */,
 /* 8 */,
 /* 9 */,
@@ -115,7 +115,7 @@ var _edit_menu_template = __webpack_require__(16);
 
 var _window = _interopRequireDefault(__webpack_require__(17));
 
-var _env = _interopRequireDefault(__webpack_require__(6));
+var _env = _interopRequireDefault(__webpack_require__(5));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -266,7 +266,7 @@ exports.default = void 0;
 
 var _electron = __webpack_require__(0);
 
-var _fsJetpack = _interopRequireDefault(__webpack_require__(5));
+var _fsJetpack = _interopRequireDefault(__webpack_require__(4));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 

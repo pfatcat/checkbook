@@ -71,13 +71,12 @@ const saveOFXTransactionPromise = function (transaction) {
         reject(error)
         return
       }
-      resolve()
+      resolve(transaction)
     })
   });
 }
 
 const saveQIFTransactionPromise = function (transaction) {
-
   return new Promise(function (resolve, reject) {
     saveQIFTransaction(transaction, function (error) {
       if (error) {
@@ -109,7 +108,6 @@ module.exports = {
   saveQIFTransaction: saveQIFTransaction,
   saveOFXTransactionPromise: saveOFXTransactionPromise,
   saveQIFTransactionPromise: saveQIFTransactionPromise
-
 }
 
 /**** PRIVATE FUNCTIONS ****/

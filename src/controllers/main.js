@@ -1,4 +1,5 @@
 import view from "../views/main.js"
+import ofx_view from "../views/ofx_mapping.js"
 import transaction_service from "../services/transaction.js"
 import category_service from "../services/category.js"
 import datepicker from "../../node_modules/js-datepicker/datepicker.min"
@@ -7,7 +8,6 @@ import payee_service from "../services/payee.js"
 import payee_lookup_service from "../services/payee_lookup.js"
 import ofxImporter_service from "../services/ofx_importer.js"
 import qifImporter_service from "../services/qif_importer.js"
-import enums from "../helpers/enums.js"
 
 const saveTransaction = function () {
 
@@ -56,7 +56,7 @@ const mapOFXTransactions = function (filename) {
     const categories = values[1]
     const transactions = values[2]
 
-    view.render_transaction_mapping(payees, categories, transactions)
+    ofx_view.render_transaction_mapping(payees, categories, transactions)
   });
 }
 
@@ -64,91 +64,12 @@ const saveOFXTransactions = function () {
   const str_ofx_transactions = document.getElementById('ofx_transactions').getAttribute("data-transactions");
   const ofx_transactions = JSON.parse(str_ofx_transactions)
 
-  const mappingDivs = document.getElementsByClassName('mapping')
+  const payeeMap = buildPayeeMap()
 
-  let transactionsToCreate = false
-
-  let payeePromises = [];
-
-  //iterate through the mapping rows (divs)
-  for (let i = 0; i < mappingDivs.length; i++) {
-    var transDiv = mappingDivs[i]
-    const reference_code = transDiv.getAttribute("data-reference_code").trim()
-
-    transaction_service.getTransactionByReferenceCode(reference_code, function (existingTransaction) {
-
-      if (existingTransaction) {
-        //transaction exists...bail
-        return
-      }
-
-      transactionsToCreate = true;
-
-      //TODO: check for null references?
-      const targetDiv = transDiv.getElementsByClassName("targetPayee")
-      const targetSelect = targetDiv[0].getElementsByClassName("ddlPayee")[0]
-      const payee_id = targetSelect == null ? -1 : targetSelect.value
-
-      //iterate through transactions, find this reference_code and set the payee_id
-      for (let i = 0; i < ofx_transactions.length; i++) {
-        const transaction = ofx_transactions[i]
-
-        if (transaction.reference_code == reference_code) {
-          if (payee_id == -1) {
-            //payee was not selected
-            const new_payee_id = utilities.createGuid()
-            const payee = { id: new_payee_id, name: transaction.payee, defaultCategoryId: enums.categories.uncategorized }
-            transaction.payee_id = new_payee_id
-            payeePromises.push(payee_service.createPayeePromise(payee))
-          }
-          else {
-            //payee was selected
-            transaction.payee_id = targetSelect.value
-
-            //create a lookup for the payee if it does not already exist
-            const payeeLookup = {
-              "id": utilities.createGuid(),
-              "payee_id": targetSelect.value,
-              "reference_name": transaction.payee
-            }
-
-            payee_lookup_service.createPayeeLookup(payeeLookup, function (error) {
-              if (error) {
-                console.log(error)
-              }
-            })
-          }
-
-          break
-        }
-      }
-    })
-  }
-
-  if (transactionsToCreate) {
-
-    //save OFX transactions
-    Promise.all(payeePromises).then(function (resolve) {
-
-      var ofx_transaction_promises = []
-
-      for (let i = 0; i < ofx_transactions.length; i++) {
-        let transaction = ofx_transactions[i]
-        transaction.id = utilities.createGuid()
-        const promise = transaction_service.saveOFXTransactionPromise(transaction)
-
-        ofx_transaction_promises.push(promise)
-      }
-
-      Promise.all(ofx_transaction_promises).then(function (resolve) {
-        loadTransactions()
-        closeMappingWindow()
-      })
-    })
-  }
-  else {
+  ofxImporter_service.saveOFXTransactions(ofx_transactions, payeeMap, function(){
+    loadTransactions()
     closeMappingWindow()
-  }
+  })
 }
 
 const newPayee = function () {
@@ -229,6 +150,25 @@ function buildCategoryList() {
     const options = view.buildCategoryOptions(categories)
     document.querySelector("#ddlCategory").innerHTML = options
   })
+}
+
+function buildPayeeMap(){
+  const mappingDivs = document.getElementsByClassName('mapping')
+
+  let payeeMaps = {}
+
+  for (let i = 0; i < mappingDivs.length; i++) {
+    
+    const payeeId = mappingDivs[i].querySelector(".ddlPayee").value
+
+    if(payeeId != -1){
+      const sourcePayee = mappingDivs[i].querySelector(".sourcePayee").innerText
+      payee_lookup_service.createPayeeLookup(payeeId, sourcePayee, function(){})      
+      payeeMaps[sourcePayee] = payeeId
+    }
+  }
+
+  return payeeMaps
 }
 
 //on_load...this is probably a terrible way to do this

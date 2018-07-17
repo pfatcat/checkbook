@@ -130,7 +130,196 @@ module.exports = require("path");
 "use strict";
 
 
-var _repo = _interopRequireDefault(__webpack_require__(4));
+const Database = __webpack_require__(30);
+
+const path = __webpack_require__(2);
+
+const dbPath = path.resolve(__dirname, '../src/data/checkbook.db');
+module.exports = {
+  getData: function (sql, params, callback) {
+    const db = new Database(dbPath);
+
+    try {
+      const stmt = db.prepare(sql);
+      const rows = stmt.all(params);
+      callback(rows);
+    } catch (err) {
+      handleError(err, sql, params);
+    } finally {
+      db.close();
+    }
+  },
+  getRow: function (sql, params, callback) {
+    const db = new Database(dbPath);
+
+    try {
+      const stmt = db.prepare(sql);
+      const row = stmt.get(params);
+      callback(row);
+    } catch (err) {
+      handleError(err, sql, params);
+    } finally {
+      db.close();
+    }
+  },
+  executeStatement: function (sql, params, callback) {
+    const db = new Database(dbPath);
+
+    try {
+      const stmt = db.prepare(sql);
+      stmt.run(params);
+      callback();
+    } catch (err) {
+      handleError(err, sql, params);
+      callback(err);
+    } finally {
+      db.close();
+    }
+  }
+};
+
+function handleError(err, sql, params) {
+  if (err) {
+    err.sql = sql;
+    err.params = params;
+    console.log(err);
+    return true;
+  }
+
+  return false;
+}
+
+/***/ }),
+/* 4 */
+/***/ (function(module, exports) {
+
+module.exports = require("fs-jetpack");
+
+/***/ }),
+/* 5 */
+/***/ (function(module, exports) {
+
+module.exports = {"name":"development","description":"Add here any environment specific stuff you like."}
+
+/***/ }),
+/* 6 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _repo = _interopRequireDefault(__webpack_require__(3));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const getTransactions = function (render_callback) {
+  const sql = `SELECT t.id,
+                      p.name as payee,
+                      c.name as category,
+                      t.transaction_date as date,
+                      t.amount,
+                      t.memo
+                FROM transactions t
+                LEFT JOIN categories c
+                        ON IFNULL(t.category_id, 'f74a549c-3d46-4efd-95bb-935c642b649b') = c.id
+                LEFT JOIN payees p
+                        ON t.payee_id = p.id
+                ORDER BY t.transaction_date`;
+  const params = [];
+
+  _repo.default.getData(sql, params, function (data) {
+    render_callback(data);
+  });
+};
+
+const saveTransaction = function (newTransaction, callback) {
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
+                  VALUES (?, ?, ?, ?, ?, ?, ?);`;
+  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code];
+
+  _repo.default.executeStatement(sql, params, function (error) {
+    callback(error);
+  });
+};
+
+const saveOFXTransaction = function (newTransaction, callback) {
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
+                  SELECT ?, ?, ?, ?, p.default_category_id, ?, ?
+                  FROM payees p
+                  WHERE p.id = ?;`;
+  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.amount, newTransaction.reference_code, newTransaction.payee_id];
+
+  _repo.default.executeStatement(sql, params, function (error) {
+    callback(error);
+  });
+};
+
+const saveQIFTransaction = function (newTransaction, callback) {
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount, reference_code)
+               SELECT ?, ?, ?, ?, ?, ?, ?
+               WHERE NOT EXISTS (SELECT 1 FROM transactions WHERE reference_code = ?);`;
+  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code, newTransaction.reference_code];
+
+  _repo.default.executeStatement(sql, params, function (error) {
+    callback(error);
+  });
+};
+
+const saveOFXTransactionPromise = function (transaction) {
+  return new Promise(function (resolve, reject) {
+    saveOFXTransaction(transaction, function (error) {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve(transaction);
+    });
+  });
+};
+
+const saveQIFTransactionPromise = function (transaction) {
+  return new Promise(function (resolve, reject) {
+    saveQIFTransaction(transaction, function (error) {
+      if (error) {
+        reject(error);
+        return;
+      }
+
+      resolve();
+    });
+  });
+};
+
+const getTransactionByReferenceCode = function (reference_code, callback) {
+  const sql = `SELECT * FROM transactions WHERE reference_code = ?`;
+  const params = [reference_code];
+
+  _repo.default.getRow(sql, params, function (payee, error) {
+    callback(payee, error);
+  });
+};
+
+module.exports = {
+  getTransactions: getTransactions,
+  getTransactionByReferenceCode: getTransactionByReferenceCode,
+  saveTransaction: saveTransaction,
+  saveOFXTransaction: saveOFXTransaction,
+  saveQIFTransaction: saveQIFTransaction,
+  saveOFXTransactionPromise: saveOFXTransactionPromise,
+  saveQIFTransactionPromise: saveQIFTransactionPromise
+  /**** PRIVATE FUNCTIONS ****/
+
+};
+
+/***/ }),
+/* 7 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _repo = _interopRequireDefault(__webpack_require__(3));
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
@@ -261,195 +450,6 @@ module.exports = {
   getAllPayeesPromise: getAllPayeesPromise,
   findOrCreatePayee: findOrCreatePayee,
   findOrCreatePayeePromise: findOrCreatePayeePromise
-};
-
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-const Database = __webpack_require__(29);
-
-const path = __webpack_require__(2);
-
-const dbPath = path.resolve(__dirname, '../src/data/checkbook.db');
-module.exports = {
-  getData: function (sql, params, callback) {
-    const db = new Database(dbPath);
-
-    try {
-      const stmt = db.prepare(sql);
-      const rows = stmt.all(params);
-      callback(rows);
-    } catch (err) {
-      handleError(err, sql, params);
-    } finally {
-      db.close();
-    }
-  },
-  getRow: function (sql, params, callback) {
-    const db = new Database(dbPath);
-
-    try {
-      const stmt = db.prepare(sql);
-      const row = stmt.get(params);
-      callback(row);
-    } catch (err) {
-      handleError(err, sql, params);
-    } finally {
-      db.close();
-    }
-  },
-  executeStatement: function (sql, params, callback) {
-    const db = new Database(dbPath);
-
-    try {
-      const stmt = db.prepare(sql);
-      stmt.run(params);
-      callback();
-    } catch (err) {
-      handleError(err, sql, params);
-      callback(err);
-    } finally {
-      db.close();
-    }
-  }
-};
-
-function handleError(err, sql, params) {
-  if (err) {
-    err.sql = sql;
-    err.params = params;
-    console.log(err);
-    return true;
-  }
-
-  return false;
-}
-
-/***/ }),
-/* 5 */
-/***/ (function(module, exports) {
-
-module.exports = require("fs-jetpack");
-
-/***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-module.exports = {"name":"development","description":"Add here any environment specific stuff you like."}
-
-/***/ }),
-/* 7 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _repo = _interopRequireDefault(__webpack_require__(4));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const getTransactions = function (render_callback) {
-  const sql = `SELECT t.id,
-                      p.name as payee,
-                      c.name as category,
-                      t.transaction_date as date,
-                      t.amount,
-                      t.memo
-                FROM transactions t
-                LEFT JOIN categories c
-                        ON IFNULL(t.category_id, 'f74a549c-3d46-4efd-95bb-935c642b649b') = c.id
-                LEFT JOIN payees p
-                        ON t.payee_id = p.id
-                ORDER BY t.transaction_date`;
-  const params = [];
-
-  _repo.default.getData(sql, params, function (data) {
-    render_callback(data);
-  });
-};
-
-const saveTransaction = function (newTransaction, callback) {
-  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
-                  VALUES (?, ?, ?, ?, ?, ?, ?);`;
-  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code];
-
-  _repo.default.executeStatement(sql, params, function (error) {
-    callback(error);
-  });
-};
-
-const saveOFXTransaction = function (newTransaction, callback) {
-  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
-                  SELECT ?, ?, ?, ?, p.default_category_id, ?, ?
-                  FROM payees p
-                  WHERE p.id = ?;`;
-  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.amount, newTransaction.reference_code, newTransaction.payee_id];
-
-  _repo.default.executeStatement(sql, params, function (error) {
-    callback(error);
-  });
-};
-
-const saveQIFTransaction = function (newTransaction, callback) {
-  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount, reference_code)
-               SELECT ?, ?, ?, ?, ?, ?, ?
-               WHERE NOT EXISTS (SELECT 1 FROM transactions WHERE reference_code = ?);`;
-  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.category_id, newTransaction.amount, newTransaction.reference_code, newTransaction.reference_code];
-
-  _repo.default.executeStatement(sql, params, function (error) {
-    callback(error);
-  });
-};
-
-const saveOFXTransactionPromise = function (transaction) {
-  return new Promise(function (resolve, reject) {
-    saveOFXTransaction(transaction, function (error) {
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      resolve();
-    });
-  });
-};
-
-const saveQIFTransactionPromise = function (transaction) {
-  return new Promise(function (resolve, reject) {
-    saveQIFTransaction(transaction, function (error) {
-      if (error) {
-        reject(error);
-        return;
-      }
-
-      resolve();
-    });
-  });
-};
-
-const getTransactionByReferenceCode = function (reference_code, callback) {
-  const sql = `SELECT * FROM transactions WHERE reference_code = ?`;
-  const params = [reference_code];
-
-  _repo.default.getRow(sql, params, function (payee, error) {
-    callback(payee, error);
-  });
-};
-
-module.exports = {
-  getTransactions: getTransactions,
-  getTransactionByReferenceCode: getTransactionByReferenceCode,
-  saveTransaction: saveTransaction,
-  saveOFXTransaction: saveOFXTransaction,
-  saveQIFTransaction: saveQIFTransaction,
-  saveOFXTransactionPromise: saveOFXTransactionPromise,
-  saveQIFTransactionPromise: saveQIFTransactionPromise
-  /**** PRIVATE FUNCTIONS ****/
-
 };
 
 /***/ }),
@@ -915,7 +915,7 @@ function updateLink (link, options, obj) {
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
-var _repo = _interopRequireDefault(__webpack_require__(4));
+var _repo = _interopRequireDefault(__webpack_require__(3));
 
 var _enums = _interopRequireDefault(__webpack_require__(11));
 
@@ -1066,9 +1066,9 @@ __webpack_require__(25);
 
 var _electron = __webpack_require__(0);
 
-var _fsJetpack = _interopRequireDefault(__webpack_require__(5));
+var _fsJetpack = _interopRequireDefault(__webpack_require__(4));
 
-var _env = _interopRequireDefault(__webpack_require__(6));
+var _env = _interopRequireDefault(__webpack_require__(5));
 
 var _main2 = _interopRequireDefault(__webpack_require__(26));
 
@@ -1403,23 +1403,23 @@ document.addEventListener("click", supportExternalLinks, false);
 
 var _main = _interopRequireDefault(__webpack_require__(27));
 
-var _transaction = _interopRequireDefault(__webpack_require__(7));
+var _ofx_mapping = _interopRequireDefault(__webpack_require__(29));
+
+var _transaction = _interopRequireDefault(__webpack_require__(6));
 
 var _category = _interopRequireDefault(__webpack_require__(10));
 
-var _datepicker = _interopRequireDefault(__webpack_require__(30));
+var _datepicker = _interopRequireDefault(__webpack_require__(31));
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
-var _payee = _interopRequireDefault(__webpack_require__(3));
+var _payee = _interopRequireDefault(__webpack_require__(7));
 
-var _payee_lookup = _interopRequireDefault(__webpack_require__(31));
+var _payee_lookup = _interopRequireDefault(__webpack_require__(32));
 
-var _ofx_importer = _interopRequireDefault(__webpack_require__(32));
+var _ofx_importer = _interopRequireDefault(__webpack_require__(33));
 
-var _qif_importer = _interopRequireDefault(__webpack_require__(33));
-
-var _enums = _interopRequireDefault(__webpack_require__(11));
+var _qif_importer = _interopRequireDefault(__webpack_require__(34));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1465,96 +1465,19 @@ const mapOFXTransactions = function (filename) {
     const categories = values[1];
     const transactions = values[2];
 
-    _main.default.render_transaction_mapping(payees, categories, transactions);
+    _ofx_mapping.default.render_transaction_mapping(payees, categories, transactions);
   });
 };
 
 const saveOFXTransactions = function () {
   const str_ofx_transactions = document.getElementById('ofx_transactions').getAttribute("data-transactions");
   const ofx_transactions = JSON.parse(str_ofx_transactions);
-  const mappingDivs = document.getElementsByClassName('mapping');
-  let transactionsToCreate = false;
-  let payeePromises = []; //iterate through the mapping rows (divs)
+  const payeeMap = buildPayeeMap();
 
-  for (let i = 0; i < mappingDivs.length; i++) {
-    var transDiv = mappingDivs[i];
-    const reference_code = transDiv.getAttribute("data-reference_code").trim();
-
-    _transaction.default.getTransactionByReferenceCode(reference_code, function (existingTransaction) {
-      if (existingTransaction) {
-        //transaction exists...bail
-        return;
-      }
-
-      transactionsToCreate = true; //TODO: check for null references?
-
-      const targetDiv = transDiv.getElementsByClassName("targetPayee");
-      const targetSelect = targetDiv[0].getElementsByClassName("ddlPayee")[0];
-      const payee_id = targetSelect == null ? -1 : targetSelect.value; //iterate through transactions, find this reference_code and set the payee_id
-
-      for (let i = 0; i < ofx_transactions.length; i++) {
-        const transaction = ofx_transactions[i];
-
-        if (transaction.reference_code == reference_code) {
-          if (payee_id == -1) {
-            //payee was not selected
-            const new_payee_id = _utilities.default.createGuid();
-
-            const payee = {
-              id: new_payee_id,
-              name: transaction.payee,
-              defaultCategoryId: _enums.default.categories.uncategorized
-            };
-            transaction.payee_id = new_payee_id;
-            payeePromises.push(_payee.default.createPayeePromise(payee));
-          } else {
-            //payee was selected
-            transaction.payee_id = targetSelect.value; //create a lookup for the payee if it does not already exist
-
-            const payeeLookup = {
-              "id": _utilities.default.createGuid(),
-              "payee_id": targetSelect.value,
-              "reference_name": transaction.payee
-            };
-
-            _payee_lookup.default.createPayeeLookup(payeeLookup, function (error) {
-              if (error) {
-                console.log(error);
-              }
-            });
-          }
-
-          break;
-        }
-      }
-    });
-  }
-
-  if (transactionsToCreate) {
-    console.log("CREATING TRANSACTIONS");
-    console.dir(payeePromises); //save OFX transactions
-
-    Promise.all(payeePromises).then(function (resolve) {
-      var ofx_transaction_promises = [];
-
-      for (let i = 0; i < ofx_transactions.length; i++) {
-        let transaction = ofx_transactions[i];
-        transaction.id = _utilities.default.createGuid();
-
-        const promise = _transaction.default.saveOFXTransactionPromise(transaction);
-
-        ofx_transaction_promises.push(promise);
-      }
-
-      console.dir(ofx_transaction_promises);
-      Promise.all(ofx_transaction_promises).then(function (resolve) {
-        loadTransactions();
-        closeMappingWindow();
-      });
-    });
-  } else {
+  _ofx_importer.default.saveOFXTransactions(ofx_transactions, payeeMap, function () {
+    loadTransactions();
     closeMappingWindow();
-  }
+  });
 };
 
 const newPayee = function () {
@@ -1632,6 +1555,25 @@ function buildCategoryList() {
 
     document.querySelector("#ddlCategory").innerHTML = options;
   });
+}
+
+function buildPayeeMap() {
+  const mappingDivs = document.getElementsByClassName('mapping');
+  let payeeMaps = {};
+
+  for (let i = 0; i < mappingDivs.length; i++) {
+    const payeeId = mappingDivs[i].querySelector(".ddlPayee").value;
+
+    if (payeeId != -1) {
+      const sourcePayee = mappingDivs[i].querySelector(".sourcePayee").innerText;
+
+      _payee_lookup.default.createPayeeLookup(payeeId, sourcePayee, function () {});
+
+      payeeMaps[sourcePayee] = payeeId;
+    }
+  }
+
+  return payeeMaps;
 } //on_load...this is probably a terrible way to do this
 
 
@@ -1649,22 +1591,7 @@ function buildCategoryList() {
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
-var _payee = _interopRequireDefault(__webpack_require__(3));
-
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const buildPayeeOptions = function (payees, payee_id) {
-  let options = "<option value='-1'>Use source payee...</option>";
-
-  for (let i = 0, len = payees.length; i < len; i++) {
-    const payee = payees[i];
-    const selected = payee.id == payee_id ? "selected" : "";
-    const option = "<option value='" + payee.id + "'" + selected + ">" + payee.name + "</option>";
-    options += option;
-  }
-
-  return options;
-};
 
 module.exports = {
   render_transactions: function (transactions) {
@@ -1691,14 +1618,54 @@ module.exports = {
 
     document.querySelector("#transactions").innerHTML = html;
   },
+  buildCategoryOptions: function (categories) {
+    let options = "<option value=''>Select a category...</option>";
+
+    for (let i = 0, len = categories.length; i < len; i++) {
+      const category = categories[i];
+      const option = "<option value='" + category.id + "'>" + category.name + "</option>";
+      options += option;
+    }
+
+    return options;
+  }
+};
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports) {
+
+module.exports = require("crypto");
+
+/***/ }),
+/* 29 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+const buildPayeeOptions = function (payees, payee_id) {
+  let options = "<option value='-1'>Use source payee...</option>";
+
+  for (let i = 0, len = payees.length; i < len; i++) {
+    const payee = payees[i];
+    const selected = payee.id == payee_id ? "selected" : "";
+    const option = "<option value='" + payee.id + "'" + selected + ">" + payee.name + "</option>";
+    options += option;
+  }
+
+  return options;
+};
+
+module.exports = {
   render_transaction_mapping: function (payees, categories, transactions) {
     let map_import = document.querySelector("#map_import");
     map_import.style.display = "inline";
     let html = `<div id="ofx_transactions" data-transactions='${JSON.stringify(transactions)}'></div>
-                  <div class="mappingHeader">
-                    <div class="sourcePayee">Source Payee</div>
-                    <div class="targetPayee">Target Payee</div>
-                  </div>`;
+                    <div class="mappingHeader">
+                      <div class="sourcePayee">Source Payee</div>
+                      <div class="targetPayee">Target Payee</div>
+                    </div>`;
     let distinctPayees = [];
 
     for (let i = 0, len = transactions.length; i < len; i++) {
@@ -1710,75 +1677,29 @@ module.exports = {
 
       distinctPayees.push(transaction.payee);
       const row = `<div class="mapping" data-reference_code="${transaction.reference_code}">
-                          <div class="sourcePayee">${transaction.payee}</div>
-                          <div class="targetPayee"><select class="ddlPayee">${buildPayeeOptions(payees, transaction.payee_id)} </select></div>
-                          <div class="newPayee"><a id="newPayee${i}" href="#" class="lnk_newPayee">New Payee</a></div>
-                        </div>`;
+                            <div class="sourcePayee">${transaction.payee}</div>
+                            <div class="targetPayee"><select class="ddlPayee">${buildPayeeOptions(payees, transaction.payee_id)} </select></div>
+                            <div class="newPayee"><a id="newPayee${i}" href="#" class="lnk_newPayee">New Payee</a></div>
+                          </div>`;
       html += row;
     }
 
     document.querySelector("#transactionMapping").innerHTML = html;
-  },
-  buildCategoryOptions: function (categories) {
-    let options = "<option value=''>Select a category...</option>";
-
-    for (let i = 0, len = categories.length; i < len; i++) {
-      const category = categories[i];
-      const option = "<option value='" + category.id + "'>" + category.name + "</option>";
-      options += option;
-    }
-
-    return options;
-  },
-  buildPayeeOptions: buildPayeeOptions
+  }
 };
 
 /***/ }),
-/* 28 */
-/***/ (function(module, exports) {
-
-module.exports = require("crypto");
-
-/***/ }),
-/* 29 */
+/* 30 */
 /***/ (function(module, exports) {
 
 module.exports = require("better-sqlite3");
 
 /***/ }),
-/* 30 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;!function(t,e){var n="function"==typeof Symbol&&"symbol"==typeof Symbol.iterator?function(t){return typeof t}:function(t){return t&&"function"==typeof Symbol&&t.constructor===Symbol&&t!==Symbol.prototype?"symbol":typeof t};"object"===( false?"undefined":n(exports))?module.exports=e(): true?!(__WEBPACK_AMD_DEFINE_RESULT__ = (function(){return e()}).call(exports, __webpack_require__, exports, module),
 				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)):t.datepicker=e()}(this,function(){"use strict";function t(t,a){var s=t.split?document.querySelector(t):t;a=e(a||n(),s,t);var r=s.parentElement,i=document.createElement("div"),c=a,u=c.startDate,d=c.dateSelected,p=s===document.body||s===document.querySelector("html"),v={el:s,parent:r,nonInput:"INPUT"!==s.nodeName,noPosition:p,position:!p&&a.position,startDate:u,dateSelected:d,disabledDates:a.disabledDates,minDate:a.minDate,maxDate:a.maxDate,noWeekends:!!a.noWeekends,calendar:i,currentMonth:(u||d).getMonth(),currentMonthName:(a.months||w)[(u||d).getMonth()],currentYear:(u||d).getFullYear(),setDate:h,reset:f,remove:y,onSelect:a.onSelect,onShow:a.onShow,onHide:a.onHide,onMonthChange:a.onMonthChange,formatter:a.formatter,months:a.months||w,days:a.customDays||g,startDay:a.startDay,overlayPlaceholder:a.overlayPlaceholder||"4-digit year",overlayButton:a.overlayButton||"Submit",disableMobile:a.disableMobile,isMobile:"ontouchstart"in window};return d&&l(s,v),i.classList.add("qs-datepicker"),i.classList.add("qs-hidden"),b.push(s),o(u||d,v),S.forEach(function(t){window.addEventListener(t,D.bind(v))}),"static"===getComputedStyle(r).position&&(r.style.position="relative"),r.appendChild(i),v}function e(t,e){if(b.includes(e))throw"A datepicker already exists on that element.";var n=t.position,o=t.maxDate,s=t.minDate,r=t.dateSelected,i=t.formatter,c=t.customMonths,l=t.customDays,u=t.overlayPlaceholder,d=t.overlayButton,h=t.startDay,f=t.disabledDates,y=+v(r);if(t.disabledDates=(f||[]).map(function(t){if(!p(t))throw'You supplied an invalid date to "options.disabledDates".';if(+v(t)===y)throw'"disabledDates" cannot contain the same date as "dateSelected".';return+v(t)}),n){if(!["tr","tl","br","bl","c"].some(function(t){return n===t}))throw'"options.position" must be one of the following: tl, tr, bl, br, or c.';t.position=a(n)}else t.position=a("bl");if(["startDate","dateSelected","minDate","maxDate"].forEach(function(e){if(t[e]){if(!p(t[e])||isNaN(+t[e]))throw'"options.'+e+'" needs to be a valid JavaScript Date object.';t[e]=v(t[e])}}),t.startDate=v(t.startDate||t.dateSelected||new Date),t.formatter="function"==typeof i?i:null,o<s)throw'"maxDate" in options is less than "minDate".';if(r){if(s>r)throw'"dateSelected" in options is less than "minDate".';if(o<r)throw'"dateSelected" in options is greater than "maxDate".'}if(["onSelect","onShow","onHide","onMonthChange"].forEach(function(e){t[e]="function"==typeof t[e]&&t[e]}),[c,l].forEach(function(e,n){if(e){var a=['"customMonths" must be an array with 12 strings.','"customDays" must be an array with 7 strings.'];if("[object Array]"!=={}.toString.call(e)||e.length!==(n?7:12))throw a[n];t[n?"days":"months"]=e}}),void 0!==h&&+h&&+h>0&&+h<7){var m=(t.customDays||g).slice(),q=m.splice(0,h);t.customDays=m.concat(q),t.startDay=+h}else t.startDay=0;return[u,d].forEach(function(e,n){e&&e.split&&(n?t.overlayButton=e:t.overlayPlaceholder=e)}),t}function n(){return{startDate:v(new Date),position:"bl"}}function a(t){var e={};return e[M[t[0]]]=1,"c"===t?e:(e[M[t[1]]]=1,e)}function o(t,e){var n=s(t,e),a=r(t,e),o=i(e);e.calendar.innerHTML=n+a+o}function s(t,e){return'\n      <div class="qs-controls">\n        <div class="qs-arrow qs-left"></div>\n        <div class="qs-month-year">\n          <span class="qs-month">'+e.months[t.getMonth()]+'</span>\n          <span class="qs-year">'+t.getFullYear()+'</span>\n        </div>\n        <div class="qs-arrow qs-right"></div>\n      </div>\n    '}function r(t,e){var n=e.minDate,a=e.maxDate,o=e.dateSelected,s=e.currentYear,r=e.currentMonth,i=e.noWeekends,c=e.days,l=e.disabledDates,u=new Date,d=u.toJSON().slice(0,7)===t.toJSON().slice(0,7),h=new Date(new Date(t).setDate(1)),f=h.getDay()-e.startDay,p=f<0?7:0;h.setMonth(h.getMonth()+1),h.setDate(0);var y=h.getDate(),m=[],q=p+7*((f+y)/7|0);q+=(f+y)%7?7:0,0!==e.startDay&&0===f&&(q+=7);for(var D=1;D<=q;D++){var b=c[(D-1)%7],S=D-(f>=0?f:7+f),g=new Date(s,r,S),w=S<1||S>y,M="",L='<span class="qs-num">'+S+"</span>";if(w)M="qs-empty",L="";else{var N=n&&g<n||a&&g>a||l.includes(+v(g)),x=c[6],Y=c[0],C=b===x||b===Y,P=d&&!N&&S===u.getDate();N=N||i&&C,M=N?"qs-disabled":P?"qs-current":""}+g!=+o||w||(M+=" qs-active"),m.push('<div class="qs-square qs-num '+b+" "+M+'">'+L+"</div>")}var k=c.map(function(t){return'<div class="qs-square qs-day">'+t+"</div>"}).concat(m);if(k.length%7!=0)throw"Calendar not constructed properly. The # of squares should be a multiple of 7.";return k.unshift('<div class="qs-squares">'),k.push("</div>"),k.join("")}function i(t){return'\n      <div class="qs-overlay qs-hidden">\n        <div class="qs-close">&#10005;</div>\n        <input type="number" class="qs-overlay-year" placeholder="'+t.overlayPlaceholder+'" />\n        <div class="qs-submit qs-disabled">'+t.overlayButton+"</div>\n      </div>\n    "}function c(t,e){var n=e.currentMonth,a=e.currentYear,o=e.calendar,s=e.el,r=e.onSelect,i=o.querySelector(".qs-active"),c=t.textContent;e.dateSelected=new Date(a,n,c),i&&i.classList.remove("qs-active"),t.classList.add("qs-active"),l(s,e),m(e),r&&r(e)}function l(t,e){if(!e.nonInput)return e.formatter?e.formatter(t,e.dateSelected):void(t.value=e.dateSelected.toDateString())}function u(t,e,n){n?e.currentYear=n:(e.currentMonth+=t.contains("qs-right")?1:-1,12===e.currentMonth?(e.currentMonth=0,e.currentYear++):-1===e.currentMonth&&(e.currentMonth=11,e.currentYear--)),o(new Date(e.currentYear,e.currentMonth,1),e),e.currentMonthName=e.months[e.currentMonth],e.onMonthChange&&e.onMonthChange(e)}function d(t){if(!t.noPosition){var e=t.el,n=t.calendar,a=t.position,o=t.parent,s=a.top,r=a.right;if(a.centered)return n.classList.add("qs-centered");var i=o.getBoundingClientRect(),c=e.getBoundingClientRect(),l=n.getBoundingClientRect(),u=c.top-i.top+o.scrollTop,d="\n      top:"+(u-(s?l.height:-1*c.height))+"px;\n      left:"+(c.left-i.left+(r?c.width-l.width:0))+"px;\n    ";n.setAttribute("style",d)}}function h(t,e){if(!p(t))throw"`setDate` needs a JavaScript Date object.";t=v(t),this.currentYear=t.getFullYear(),this.currentMonth=t.getMonth(),this.currentMonthName=this.months[t.getMonth()],this.dateSelected=e?void 0:t,!e&&l(this.el,this),o(t,this),e&&(this.el.value="")}function f(){this.setDate(this.startDate,!0)}function p(t){return["[object Date]"==={}.toString.call(t),"Invalid Date"!==t.toString()].every(Boolean)}function v(t){return t?new Date(t.toDateString()):t}function y(){var t=this.calendar,e=this.parent,n=this.el;S.forEach(function(t){window.removeEventListener(t,D)}),t.remove(),t.hasOwnProperty("parentStyle")&&(e.style.position=""),b=b.filter(function(t){return t!==n})}function m(t){t.calendar.classList.add("qs-hidden"),t.onHide&&t.onHide(t)}function q(t){t.calendar.classList.remove("qs-hidden"),d(t),t.onShow&&t.onShow(t)}function D(t){function e(e){var o=e.calendar,s=l.classList,r=o.querySelector(".qs-month-year"),d=s.contains("qs-close");if(s.contains("qs-num")){var h="SPAN"===l.nodeName?l.parentNode:l;!["qs-disabled","qs-active","qs-empty"].some(function(t){return h.classList.contains(t)})&&c(h,e)}else if(s.contains("qs-arrow"))u(s,e);else if(i.includes(r)||d)n(o,d,e);else if(l.classList.contains("qs-submit")){var f=o.querySelector(".qs-overlay-year");a(t,f,e)}}function n(t,e,n){[".qs-overlay",".qs-controls",".qs-squares"].forEach(function(e,n){t.querySelector(e).classList.toggle(n?"qs-blur":"qs-hidden")});var a=t.querySelector(".qs-overlay-year");e?a.value="":a.focus()}function a(t,e,n){var a=isNaN((new Date).setFullYear(e.value||void 0));if(13===t.which||"click"===t.type){if(a||e.classList.contains("qs-disabled"))return;u(null,n,e.value)}else{n.calendar.querySelector(".qs-submit").classList[a?"add":"remove"]("qs-disabled")}}if(!this.isMobile||!this.disableMobile){if(!t.path){for(var o=t.target,s=[];o!==document;)s.push(o),o=o.parentNode;t.path=s}var r=t.type,i=t.path,l=t.target,d=this.calendar,h=this.el,f=d.classList,p=f.contains("qs-hidden"),v=i.includes(d);if("keydown"===r){var y=d.querySelector(".qs-overlay"),D=!y.classList.contains("qs-hidden");if(13===t.which&&D)return t.stopPropagation(),a(t,l,this);if(27===t.which&&D)return n(d,!0,this);if(9!==t.which)return}if("focusin"===r)return l===h&&q(this);this.noPosition?v?e(this):p?q(this):m(this):p?l===h&&q(this):"click"===r&&v?e(this):"input"===r?a(t,l,this):l!==h&&m(this)}}Array.prototype.includes||(Array.prototype.includes=function(t){return this.reduce(function(e,n){return e||n===t},!1)});var b=[],S=["click","focusin","keydown","input"],g=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"],w=["January","February","March","April","May","June","July","August","September","October","November","December"],M={t:"top",r:"right",b:"bottom",l:"left",c:"centered"};return t});
-
-/***/ }),
-/* 31 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-var _repo = _interopRequireDefault(__webpack_require__(4));
-
-var _utilities = _interopRequireDefault(__webpack_require__(1));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const createPayeeLookup = function (payeeLookup, callback) {
-  const sql = `INSERT INTO payee_lookup(id, payee_id, reference_name)
-                SELECT ?,?,?
-                WHERE NOT EXISTS (SELECT * FROM payee_lookup WHERE reference_name = ?)`;
-  const params = [payeeLookup.id, payeeLookup.payee_id, payeeLookup.reference_name, payeeLookup.reference_name];
-
-  _repo.default.executeStatement(sql, params, function (error) {
-    callback(error);
-  });
-};
-
-module.exports = {
-  createPayeeLookup: createPayeeLookup
-};
 
 /***/ }),
 /* 32 */
@@ -1787,11 +1708,48 @@ module.exports = {
 "use strict";
 
 
-var _payee = _interopRequireDefault(__webpack_require__(3));
-
-var _transaction = _interopRequireDefault(__webpack_require__(7));
+var _repo = _interopRequireDefault(__webpack_require__(3));
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+const createPayeeLookup = function (payeeId, payeeName, callback) {
+  const payeeLookupId = _utilities.default.createGuid();
+
+  const sql = `INSERT INTO payee_lookup(id, payee_id, reference_name)
+                SELECT ?,?,?
+                WHERE NOT EXISTS (SELECT * FROM payee_lookup WHERE reference_name = ?)`;
+  const params = [payeeLookupId, payeeId, payeeName, payeeName];
+
+  _repo.default.executeStatement(sql, params, function (error) {
+    if (error) {
+      console.error(error);
+      return callback(error);
+    }
+
+    callback(payeeLookupId);
+  });
+};
+
+module.exports = {
+  createPayeeLookup: createPayeeLookup
+};
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+
+var _payee = _interopRequireDefault(__webpack_require__(7));
+
+var _transaction = _interopRequireDefault(__webpack_require__(6));
+
+var _utilities = _interopRequireDefault(__webpack_require__(1));
+
+var _enums = _interopRequireDefault(__webpack_require__(11));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -1807,6 +1765,7 @@ function parseTransaction(strTransaction) {
   const transaction_date = _utilities.default.parseOFXDate(getElement(strTransaction, "DTPOSTED"));
 
   const transaction = {
+    id: _utilities.default.createGuid(),
     transaction_type: getElement(strTransaction, "TRNTYPE").trim(),
     transaction_date: transaction_date.trim(),
     amount: getElement(strTransaction, "TRNAMT").trim(),
@@ -1871,12 +1830,52 @@ const parseOFXfile = function (filename, callback) {
   });
 };
 
-module.exports = {
-  parseOFXfile: parseOFXfile
+const saveOFXTransactions = function (ofxTransactions, payeeMap, callback) {
+  let ofx_transaction_promises = [];
+
+  for (let i = 0; i < ofxTransactions.length; i++) {
+    const transaction = ofxTransactions[i];
+    transaction.payee_id = retrievePayeeId(transaction.payee, payeeMap);
+
+    const promise = _transaction.default.saveOFXTransactionPromise(transaction);
+
+    ofx_transaction_promises.push(promise);
+  }
+
+  Promise.all(ofx_transaction_promises).then(callback());
 };
 
+module.exports = {
+  parseOFXfile: parseOFXfile,
+  saveOFXTransactions: saveOFXTransactions
+};
+
+function retrievePayeeId(sourcePayee, payeeMap) {
+  const payeeId = payeeMap[sourcePayee];
+
+  if (payeeId) {
+    return payeeId;
+  }
+
+  const new_payee_id = _utilities.default.createGuid();
+
+  const payee = {
+    id: new_payee_id,
+    name: sourcePayee,
+    defaultCategoryId: _enums.default.categories.uncategorized
+  };
+
+  _payee.default.createPayee(payee, function (error) {
+    if (error) {
+      console.error(error);
+    }
+  });
+
+  return new_payee_id;
+}
+
 /***/ }),
-/* 33 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -1884,11 +1883,11 @@ module.exports = {
 
 var _utilities = _interopRequireDefault(__webpack_require__(1));
 
-var _payee = _interopRequireDefault(__webpack_require__(3));
+var _payee = _interopRequireDefault(__webpack_require__(7));
 
 var _category = _interopRequireDefault(__webpack_require__(10));
 
-var _transaction = _interopRequireDefault(__webpack_require__(7));
+var _transaction = _interopRequireDefault(__webpack_require__(6));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
