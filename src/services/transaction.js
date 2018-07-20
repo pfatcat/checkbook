@@ -3,9 +3,9 @@ import repo from "../data/repo";
 const getTransactions = function (render_callback) {
 
   const sql = `SELECT t.id,
-                      p.name as payee,
-                      c.name as category,
-                      t.transaction_date as date,
+                      p.name as payee_name,
+                      c.name as category_name,
+                      t.transaction_date,
                       t.amount,
                       t.memo
                 FROM transactions t
@@ -34,10 +34,11 @@ const saveTransaction = function (newTransaction, callback) {
 
 
 const saveOFXTransaction = function (newTransaction, callback) {
-  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount, reference_code)
                   SELECT ?, ?, ?, ?, p.default_category_id, ?, ?
                   FROM payees p
-                  WHERE p.id = ?;`
+                  WHERE p.id = ?
+                  AND NOT EXISTS (SELECT 1 FROM transactions WHERE reference_code = ?);`
 
   const params = [newTransaction.id,
   newTransaction.transaction_date,
@@ -45,7 +46,8 @@ const saveOFXTransaction = function (newTransaction, callback) {
   newTransaction.memo,
   newTransaction.amount,
   newTransaction.reference_code,
-  newTransaction.payee_id]
+  newTransaction.payee_id,
+  newTransaction.reference_code]
 
   repo.executeStatement(sql, params, function (error) {
     callback(error);

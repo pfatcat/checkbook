@@ -124,7 +124,9 @@ function populateElements() {
 }
 
 function loadTransactions() {
-  transaction_service.getTransactions(view.render_transactions)
+  transaction_service.getTransactions(function(transactions){  
+    view.render_transactions(transactions)
+  })
 }
 
 function closeMappingWindow() {
@@ -162,7 +164,7 @@ function buildPayeeMap(){
     const payeeId = mappingDivs[i].querySelector(".ddlPayee").value
 
     if(payeeId != -1){
-      const sourcePayee = mappingDivs[i].querySelector(".sourcePayee").innerText
+      const sourcePayee = mappingDivs[i].querySelector(".sourcePayee").innerHTML
       payee_lookup_service.createPayeeLookup(payeeId, sourcePayee, function(){})      
       payeeMaps[sourcePayee] = payeeId
     }

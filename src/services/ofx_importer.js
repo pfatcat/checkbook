@@ -20,7 +20,7 @@ function parseTransaction(strTransaction) {
     transaction_type: getElement(strTransaction, "TRNTYPE").trim(),
     transaction_date: transaction_date.trim(),
     amount: getElement(strTransaction, "TRNAMT").trim(),
-    payee: getElement(strTransaction, "NAME").trim(),
+    payee_name: getElement(strTransaction, "NAME").trim(),
   }
 
   const ofx_code = getElement(strTransaction, "REFNUM").trim()
@@ -39,7 +39,7 @@ function isValidTransaction(transaction) {
     return false
   }
 
-  if (transaction.payee == "") {
+  if (transaction.payee_name == "") {
     return false
   }
 
@@ -71,7 +71,7 @@ const parseOFXfile = function (filename, callback) {
 
       if (isValidTransaction(newTransaction)) {
         const promise = new Promise(function (resolve, reject) {
-          payee.findPayeeId(newTransaction.payee, function (payeeId) {
+          payee.findPayeeId(newTransaction.payee_name, function (payeeId) {
             newTransaction.payee_id = payeeId
             resolve(newTransaction)
           })
@@ -92,14 +92,13 @@ const saveOFXTransactions = function (ofxTransactions, payeeMap, callback) {
 
   for (let i = 0; i < ofxTransactions.length; i++) {
     const transaction = ofxTransactions[i]
-    transaction.payee_id = retrievePayeeId(transaction.payee, payeeMap)
+    transaction.payee_id = retrievePayeeId(transaction.payee_name, payeeMap)
 
     const promise = transaction_service.saveOFXTransactionPromise(transaction)
     ofx_transaction_promises.push(promise)
   }
 
   Promise.all(ofx_transaction_promises).then(callback())
-
 }
 
 module.exports = {
@@ -108,6 +107,7 @@ module.exports = {
 }
 
 function retrievePayeeId(sourcePayee, payeeMap) {
+
   const payeeId = payeeMap[sourcePayee]
 
   if (payeeId) {
@@ -120,4 +120,9 @@ function retrievePayeeId(sourcePayee, payeeMap) {
     if (error) { console.error(error) }
   })
   return new_payee_id
+}
+
+function checkExistingTransaction(ofxTransaction) {
+
+  return false
 }

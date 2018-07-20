@@ -9,18 +9,18 @@ module.exports = {
 
       const transaction = transactions[i];
 
-      const transactionDate = utilities.toMMDDYYYY(new Date(transaction.date))
+      const transaction_date = utilities.toMMDDYYYY(new Date(transaction.transaction_date))
 
       let record = `<div class="record">
-          <div id="date">${transactionDate}</div>
+          <div id="transaction_date">${transaction_date}</div>
           <div id="payee_category_memo">
-            <div id="payee" >${transaction.payee}</div>
+            <div id="payee_name" >${transaction.payee_name}</div>
             <div id="category_memo">
-              <div id="category">${transaction.category}</div>
+              <div id="category_name">${transaction.category_name}</div>
               <div id="memo">${utilities.nullToSpace(transaction.memo)}</div>
             </div>
           </div>
-          <div id="amount">${transaction.amount}</div>
+          <div id="amount">${formatCurrency(transaction.amount)}</div>
         </div>`;
 
       html += record
@@ -43,4 +43,9 @@ module.exports = {
   }
 };
 
+
+function formatCurrency(amount){
+
+  return parseFloat(amount).toFixed(2)
+}
 

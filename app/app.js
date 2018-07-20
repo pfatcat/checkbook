@@ -214,9 +214,9 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 const getTransactions = function (render_callback) {
   const sql = `SELECT t.id,
-                      p.name as payee,
-                      c.name as category,
-                      t.transaction_date as date,
+                      p.name as payee_name,
+                      c.name as category_name,
+                      t.transaction_date,
                       t.amount,
                       t.memo
                 FROM transactions t
@@ -243,11 +243,12 @@ const saveTransaction = function (newTransaction, callback) {
 };
 
 const saveOFXTransaction = function (newTransaction, callback) {
-  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount,reference_code)
+  const sql = `INSERT INTO transactions (id, transaction_date, payee_id, memo, category_id, amount, reference_code)
                   SELECT ?, ?, ?, ?, p.default_category_id, ?, ?
                   FROM payees p
-                  WHERE p.id = ?;`;
-  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.amount, newTransaction.reference_code, newTransaction.payee_id];
+                  WHERE p.id = ?
+                  AND NOT EXISTS (SELECT 1 FROM transactions WHERE reference_code = ?);`;
+  const params = [newTransaction.id, newTransaction.transaction_date, newTransaction.payee_id, newTransaction.memo, newTransaction.amount, newTransaction.reference_code, newTransaction.payee_id, newTransaction.reference_code];
 
   _repo.default.executeStatement(sql, params, function (error) {
     callback(error);
@@ -1140,7 +1141,7 @@ exports = module.exports = __webpack_require__(8)(false);
 
 
 // module
-exports.push([module.i, "html,\r\nbody {\r\n  width: 100%;\r\n  height: 100%;\r\n  margin: 0;\r\n  padding: 0;\r\n}\r\n\r\nbody {\r\n  /* display: flex; */\r\n  justify-content: center;\r\n  align-items: center;\r\n  font-family: sans-serif;\r\n  color: #525252;\r\n}\r\n\r\na {\r\n  text-decoration: none;\r\n  color: #cb3837;\r\n}\r\n\r\ninput:focus::-webkit-input-placeholder { color:transparent; }\r\ninput:focus:-moz-placeholder { color:transparent; } /* FF 4-18 */\r\ninput:focus::-moz-placeholder { color:transparent; } /* FF 19+ */\r\ninput:focus:-ms-input-placeholder { color:transparent; } /* IE 10+ */\r\n\r\n.container {\r\n  text-align: center;\r\n  padding: 10px;\r\n}\r\n\r\n.register{\r\n  width: 80%;\r\n  display: flex;\r\n}\r\n\r\n.record {\r\n  width: 100%;\r\n  border: 1px solid #000000;\r\n  text-align: left;\r\n}\r\n\r\n.record #date{\r\n  width: 15%; display: inline-block;\r\n}\r\n\r\n.record #payee_category_memo{\r\n  width: 70%;\r\n  display: inline-block;\r\n  border-left: 1px solid #000000;\r\n  border-right: 1px solid #000000;\r\n}\r\n\r\n.record #category_memo{\r\n  border-top: 1px solid #000000;\r\n}\r\n\r\n.record #category_memo #category{\r\n  display: inline-block;\r\n  border-right: 1px solid #000000;\r\n  width: 50%\r\n}\r\n\r\n.record #category_memo #memo{\r\n  display: inline-block;\r\n  width: 48%;\r\n}\r\n\r\n.record #amount{\r\n  display: inline-block;\r\n  width: 10%;\r\n}\r\n\r\n.record.header {\r\n  font-weight: bold;\r\n}\r\n\r\n.record.input input {\r\n  /*color: rgb(185, 178, 178);\r\n  font-style: italic;*/\r\n  outline: none;\r\n  box-shadow: none;\r\n  width: 99%;\r\n}\r\n\r\n.record.input #amount{\r\n  width: 12%;\r\n}\r\n\r\n.record.input #txt_amount{\r\n  width: 30%;\r\n}\r\n\r\n#map_import{\r\n  display: none;\r\n  position:fixed;\r\n  top: 50%;\r\n  left: 50%;\r\n  width:50em;\r\n  height:30em;\r\n  margin-top: -15em; /*set to a negative number 1/2 of your height*/\r\n  margin-left: -25em; /*set to a negative number 1/2 of your width*/\r\n  border: 1px solid #ccc;\r\n  background-color: #f3f3f3;\r\n}\r\n\r\n#mappingButtons{\r\n  position:absolute;\r\n  bottom:0;\r\n  right:0;\r\n}\r\n\r\n\r\n#transactionMapping{\r\n  overflow:scroll;\r\n  height: 25em;\r\n}\r\n\r\n#transactionMapping .mappingHeader div{\r\n  display: inline-block;\r\n}\r\n\r\n#transactionMapping .mapping div{\r\n  display: inline-block;\r\n}\r\n\r\n\r\n#transactionMapping .mapping .sourcePayee{\r\n  width: 50%;\r\n}\r\n\r\n#transactionMapping .mapping .targetPayee{\r\n  width: 30%;\r\n}\r\n\r\n#transactionMapping .mapping .newPayee{\r\n  width: 15%;\r\n}\r\n\r\n#ofx_transactions{\r\n  display: none;\r\n}\r\n\r\n", ""]);
+exports.push([module.i, "html,\r\nbody {\r\n  width: 100%;\r\n  height: 100%;\r\n  margin: 0;\r\n  padding: 0;\r\n}\r\n\r\nbody {\r\n  /* display: flex; */\r\n  justify-content: center;\r\n  align-items: center;\r\n  font-family: sans-serif;\r\n  color: #525252;\r\n}\r\n\r\na {\r\n  text-decoration: none;\r\n  color: #cb3837;\r\n}\r\n\r\ninput:focus::-webkit-input-placeholder { color:transparent; }\r\ninput:focus:-moz-placeholder { color:transparent; } /* FF 4-18 */\r\ninput:focus::-moz-placeholder { color:transparent; } /* FF 19+ */\r\ninput:focus:-ms-input-placeholder { color:transparent; } /* IE 10+ */\r\n\r\n.container {\r\n  text-align: center;\r\n  padding: 10px;\r\n}\r\n\r\n.register{\r\n  width: 80%;\r\n  display: flex;\r\n}\r\n\r\n.record {\r\n  width: 100%;\r\n  border: 1px solid #000000;\r\n  text-align: left;\r\n}\r\n\r\n.record #transaction_date{\r\n  width: 15%; display: inline-block;\r\n}\r\n\r\n.record #payee_category_memo{\r\n  width: 70%;\r\n  display: inline-block;\r\n  border-left: 1px solid #000000;\r\n  border-right: 1px solid #000000;\r\n}\r\n\r\n.record #category_memo{\r\n  border-top: 1px solid #000000;\r\n}\r\n\r\n.record #category_memo #category_name{\r\n  display: inline-block;\r\n  border-right: 1px solid #000000;\r\n  width: 50%\r\n}\r\n\r\n.record #category_memo #memo{\r\n  display: inline-block;\r\n  width: 48%;\r\n}\r\n\r\n.record #amount{\r\n  display: inline-block;\r\n  width: 10%;\r\n}\r\n\r\n.record.header {\r\n  font-weight: bold;\r\n}\r\n\r\n.record.input input {\r\n  /*color: rgb(185, 178, 178);\r\n  font-style: italic;*/\r\n  outline: none;\r\n  box-shadow: none;\r\n  width: 99%;\r\n}\r\n\r\n.record.input #amount{\r\n  width: 12%;\r\n}\r\n\r\n.record.input #txt_amount{\r\n  width: 30%;\r\n}\r\n\r\n#map_import{\r\n  display: none;\r\n  position:fixed;\r\n  top: 50%;\r\n  left: 50%;\r\n  width:50em;\r\n  height:30em;\r\n  margin-top: -15em; /*set to a negative number 1/2 of your height*/\r\n  margin-left: -25em; /*set to a negative number 1/2 of your width*/\r\n  border: 1px solid #ccc;\r\n  background-color: #f3f3f3;\r\n}\r\n\r\n#mappingButtons{\r\n  position:absolute;\r\n  bottom:0;\r\n  right:0;\r\n}\r\n\r\n\r\n#transactionMapping{\r\n  overflow:scroll;\r\n  height: 25em;\r\n}\r\n\r\n#transactionMapping .mappingHeader div{\r\n  display: inline-block;\r\n}\r\n\r\n#transactionMapping .mapping div{\r\n  display: inline-block;\r\n}\r\n\r\n\r\n#transactionMapping .mapping .sourcePayee{\r\n  width: 50%;\r\n}\r\n\r\n#transactionMapping .mapping .targetPayee{\r\n  width: 30%;\r\n}\r\n\r\n#transactionMapping .mapping .newPayee{\r\n  width: 15%;\r\n}\r\n\r\n#ofx_transactions{\r\n  display: none;\r\n}\r\n\r\n", ""]);
 
 // exports
 
@@ -1529,7 +1530,9 @@ function populateElements() {
 }
 
 function loadTransactions() {
-  _transaction.default.getTransactions(_main.default.render_transactions);
+  _transaction.default.getTransactions(function (transactions) {
+    _main.default.render_transactions(transactions);
+  });
 }
 
 function closeMappingWindow() {
@@ -1565,7 +1568,7 @@ function buildPayeeMap() {
     const payeeId = mappingDivs[i].querySelector(".ddlPayee").value;
 
     if (payeeId != -1) {
-      const sourcePayee = mappingDivs[i].querySelector(".sourcePayee").innerText;
+      const sourcePayee = mappingDivs[i].querySelector(".sourcePayee").innerHTML;
 
       _payee_lookup.default.createPayeeLookup(payeeId, sourcePayee, function () {});
 
@@ -1600,18 +1603,18 @@ module.exports = {
     for (let i = 0, len = transactions.length; i < len; i++) {
       const transaction = transactions[i];
 
-      const transactionDate = _utilities.default.toMMDDYYYY(new Date(transaction.date));
+      const transaction_date = _utilities.default.toMMDDYYYY(new Date(transaction.transaction_date));
 
       let record = `<div class="record">
-          <div id="date">${transactionDate}</div>
+          <div id="transaction_date">${transaction_date}</div>
           <div id="payee_category_memo">
-            <div id="payee" >${transaction.payee}</div>
+            <div id="payee_name" >${transaction.payee_name}</div>
             <div id="category_memo">
-              <div id="category">${transaction.category}</div>
+              <div id="category_name">${transaction.category_name}</div>
               <div id="memo">${_utilities.default.nullToSpace(transaction.memo)}</div>
             </div>
           </div>
-          <div id="amount">${transaction.amount}</div>
+          <div id="amount">${formatCurrency(transaction.amount)}</div>
         </div>`;
       html += record;
     }
@@ -1630,6 +1633,10 @@ module.exports = {
     return options;
   }
 };
+
+function formatCurrency(amount) {
+  return parseFloat(amount).toFixed(2);
+}
 
 /***/ }),
 /* 28 */
@@ -1671,13 +1678,13 @@ module.exports = {
     for (let i = 0, len = transactions.length; i < len; i++) {
       const transaction = transactions[i];
 
-      if (distinctPayees.indexOf(transaction.payee) > 0) {
+      if (distinctPayees.indexOf(transaction.payee_name) > 0) {
         continue;
       }
 
-      distinctPayees.push(transaction.payee);
+      distinctPayees.push(transaction.payee_name);
       const row = `<div class="mapping" data-reference_code="${transaction.reference_code}">
-                            <div class="sourcePayee">${transaction.payee}</div>
+                            <div class="sourcePayee">${transaction.payee_name}</div>
                             <div class="targetPayee"><select class="ddlPayee">${buildPayeeOptions(payees, transaction.payee_id)} </select></div>
                             <div class="newPayee"><a id="newPayee${i}" href="#" class="lnk_newPayee">New Payee</a></div>
                           </div>`;
@@ -1769,7 +1776,7 @@ function parseTransaction(strTransaction) {
     transaction_type: getElement(strTransaction, "TRNTYPE").trim(),
     transaction_date: transaction_date.trim(),
     amount: getElement(strTransaction, "TRNAMT").trim(),
-    payee: getElement(strTransaction, "NAME").trim()
+    payee_name: getElement(strTransaction, "NAME").trim()
   };
   const ofx_code = getElement(strTransaction, "REFNUM").trim();
   transaction.reference_code = ofx_code != "" ? ofx_code : _utilities.default.buildReferenceCode(transaction);
@@ -1785,7 +1792,7 @@ function isValidTransaction(transaction) {
     return false;
   }
 
-  if (transaction.payee == "") {
+  if (transaction.payee_name == "") {
     return false;
   }
 
@@ -1815,7 +1822,7 @@ const parseOFXfile = function (filename, callback) {
 
       if (isValidTransaction(newTransaction)) {
         const promise = new Promise(function (resolve, reject) {
-          _payee.default.findPayeeId(newTransaction.payee, function (payeeId) {
+          _payee.default.findPayeeId(newTransaction.payee_name, function (payeeId) {
             newTransaction.payee_id = payeeId;
             resolve(newTransaction);
           });
@@ -1835,7 +1842,7 @@ const saveOFXTransactions = function (ofxTransactions, payeeMap, callback) {
 
   for (let i = 0; i < ofxTransactions.length; i++) {
     const transaction = ofxTransactions[i];
-    transaction.payee_id = retrievePayeeId(transaction.payee, payeeMap);
+    transaction.payee_id = retrievePayeeId(transaction.payee_name, payeeMap);
 
     const promise = _transaction.default.saveOFXTransactionPromise(transaction);
 
@@ -1872,6 +1879,10 @@ function retrievePayeeId(sourcePayee, payeeMap) {
   });
 
   return new_payee_id;
+}
+
+function checkExistingTransaction(ofxTransaction) {
+  return false;
 }
 
 /***/ }),

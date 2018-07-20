@@ -34,14 +34,14 @@ module.exports = {
   
             const transaction = transactions[i]
   
-            if(distinctPayees.indexOf(transaction.payee) > 0){
+            if(distinctPayees.indexOf(transaction.payee_name) > 0){
               continue;
             }
   
-            distinctPayees.push(transaction.payee)
+            distinctPayees.push(transaction.payee_name)
   
             const row = `<div class="mapping" data-reference_code="${transaction.reference_code}">
-                            <div class="sourcePayee">${transaction.payee}</div>
+                            <div class="sourcePayee">${transaction.payee_name}</div>
                             <div class="targetPayee"><select class="ddlPayee">${buildPayeeOptions(payees, transaction.payee_id)} </select></div>
                             <div class="newPayee"><a id="newPayee${i}" href="#" class="lnk_newPayee">New Payee</a></div>
                           </div>`

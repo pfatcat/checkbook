@@ -40,7 +40,7 @@ input:focus:-ms-input-placeholder { color:transparent; } /* IE 10+ */
   text-align: left;
 }
 
-.record #date{
+.record #transaction_date{
   width: 15%; display: inline-block;
 }
 
@@ -55,7 +55,7 @@ input:focus:-ms-input-placeholder { color:transparent; } /* IE 10+ */
   border-top: 1px solid #000000;
 }
 
-.record #category_memo #category{
+.record #category_memo #category_name{
   display: inline-block;
   border-right: 1px solid #000000;
   width: 50%
